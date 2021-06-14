@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 
 namespace Logger
 {
@@ -63,6 +64,25 @@ namespace Logger
             
         }
         
+        public async Task LogInfo(string message)
+        {
+            await WriteToFile($"{DateTime.Now:u} [INFO] {message}");
+        }
+        
+        public async Task LogError(string message)
+        {
+            await WriteToFile($"{DateTime.Now:u} [ERROR] {message}");
+        }
+        
+        public async Task LogWarning(string message)
+        {
+            await WriteToFile($"{DateTime.Now:u} [WARNING] {message}");
+        }
+        
+        public async Task LogSuccess(string message)
+        {
+            await WriteToFile($"{DateTime.Now:u} [SUCCESS] {message}");
+        }
         public async Task LogCustom(string type, string message)
         {
             await WriteToFile($"{DateTime.Now:u} [{type}] {message}");
@@ -73,4 +93,28 @@ namespace Logger
             await WriteToFile($"{DateTime.Now:u} [{type.ToString()}] {message}");
         }
     }
+
+    public  class LogToDB
+    {
+
+        SqliteConnection connection = new SqliteConnection("logging.db");
+        
+        public   void  WriteToDB(string type, string message)
+        {
+            connection.Open();
+
+            SqliteCommand command = new SqliteCommand();
+            command.Connection = connection;
+            command.CommandText = "INSERT INTO table_logging (type,message) VALUES (type,message) ";
+            int number = command.ExecuteNonQuery();
+            Console.WriteLine($"В таблицу Users добавлено объектов: {number}");
+            
+                //TODO прописать ошибки для логирования в бд 
+        }
+
+        
+
+
+    }
+
 }
