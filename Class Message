@@ -1,0 +1,10 @@
+namespace ConsoleApp2
+{
+    public class Message
+    {
+        public string senderID;
+        public string resipientID;
+        public double Message_Time;
+        public string message;
+    }
+}
