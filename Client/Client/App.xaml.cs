@@ -12,7 +12,7 @@ namespace Client
         {
             InitializeComponent();
 
-            MainPage = new MainPage();
+            MainPage = new Messenger.MainPage();
         }
 
         protected override void OnStart()
