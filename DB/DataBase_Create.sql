@@ -1,5 +1,5 @@
 
-create table table_USER             
+create table table_user
 (
 	NICKNAME integer,
 	PASSWORD varchar(256) not null
@@ -13,6 +13,5 @@ alter table table_USER
 		primary key (NICKNAME);
 
 alter table table_USER modify NICKNAME integer auto_increment;
-
 
 
