@@ -1,8 +1,0 @@
-namespace ConsoleApp2
-{
-    public class User
-    {
-        public int ID;
-        public double password;
-    }
-}
