@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 
 namespace Logger
-{
+{ 
+    public delegate void Message(string message);
     public class LogToFile
     {
+        public event Message msg;
         private readonly string _path;
 
         public LogToFile(string path)
@@ -29,36 +31,43 @@ namespace Logger
 
             catch (UnauthorizedAccessException)
             {
+                msg?.Invoke("Отказано в доступе");
                 throw new Exception("Отказано в доступе");
             }
 
             catch (ArgumentException)
             {
+                msg?.Invoke("Параметр path пуст");
                 throw new Exception("Параметр path пуст");
             }
 
             catch (DirectoryNotFoundException)
             {
+                msg?.Invoke("Указан недопустимый путь (например, он ведет на несопоставленный диск)");
                 throw new Exception("Указан недопустимый путь (например, он ведет на несопоставленный диск)");
             }
 
             catch (PathTooLongException)
             {
+                msg?.Invoke("Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
                 throw new Exception("Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
             }
 
             catch (IOException)
             {
+                msg?.Invoke("Параметр path включает неверный или недопустимый синтаксис имени файла, имени каталога или метки тома");
                 throw new Exception(
                     "Параметр path включает неверный или недопустимый синтаксис имени файла, имени каталога или метки тома");
             }
             
             catch (ObjectDisposedException)
             {
+                msg?.Invoke("Удалено средство записи потока");
                 throw new Exception("Удалено средство записи потока");
             }
             catch (InvalidOperationException)
             {
+                msg?.Invoke("Средство записи потока в настоящее время используется предыдущей операцией записи");
                 throw new Exception("Средство записи потока в настоящее время используется предыдущей операцией записи");
             }
             
@@ -94,7 +103,9 @@ namespace Logger
         }
     }
 public class LogToDB
-        {
+{
+    public event Message mes;
+            
             public void WriteToDB(string kind, string message)
             {
                 try
@@ -113,12 +124,14 @@ public class LogToDB
                 }
                 catch (InvalidOperationException)
                 {
+                    mes?.Invoke("Невозможно открыть подключение без указания источника данных или сервера или  подключение уже открыто");
                     throw new Exception(
                         "Невозможно открыть подключение без указания источника данных или сервера или  подключение уже открыто.");
                 }
                 catch (SqliteException)
                 {
-                    throw new Exception("A SQLite error occurs during execution");
+                    mes?.Invoke("Ошибка sqlite во время выполнения");
+                    throw new Exception("Ошибка sqlite во время выполнения");
                 }
             }
         }
