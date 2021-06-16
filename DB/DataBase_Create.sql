@@ -1,16 +1,12 @@
-
 create table table_user
 (
-	nickname varchar(20),
+	nickname varchar(20) not null,
 	password varchar(256) not null
 );
 
-create unique index table_USER_NICKNAME_uindex
-	on table_USER (NICKNAME);
+create unique index table_user_nickname_uindex
+	on table_user (nickname);
 
-alter table table_USER
-	add constraint table_USER_pk
-		primary key (NICKNAME);
-
-alter table table_USER modify NICKNAME integer auto_increment;
-
+alter table table_user
+	add constraint table_user_pk
+		primary key (nickname);
