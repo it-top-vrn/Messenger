@@ -1,8 +1,8 @@
 
 create table table_user
 (
-	NICKNAME integer,
-	PASSWORD varchar(256) not null
+	nickname varchar(20),
+	password varchar(256) not null
 );
 
 create unique index table_USER_NICKNAME_uindex
@@ -13,5 +13,4 @@ alter table table_USER
 		primary key (NICKNAME);
 
 alter table table_USER modify NICKNAME integer auto_increment;
-
 
