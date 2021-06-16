@@ -93,28 +93,34 @@ namespace Logger
             await WriteToFile($"{DateTime.Now:u} [{type.ToString()}] {message}");
         }
     }
-
-    public  class LogToDB
-    {
-
-        SqliteConnection connection = new SqliteConnection("logging.db");
-        
-        public   void  WriteToDB(string type, string message)
+public class LogToDB
         {
-            connection.Open();
+            public void WriteToDB(string kind, string message)
+            {
+                try
+                {
+                    using (var connection = new SqliteConnection("Data Source=logdata.db"))
 
-            SqliteCommand command = new SqliteCommand();
-            command.Connection = connection;
-            command.CommandText = "INSERT INTO table_logging (type,message) VALUES (type,message) ";
-            int number = command.ExecuteNonQuery();
-            Console.WriteLine($"В таблицу Users добавлено объектов: {number}");
-            
-                //TODO прописать ошибки для логирования в бд 
+                    {
+                        connection.Open();
+
+                        SqliteCommand command = new SqliteCommand();
+                        command.Connection = connection;
+                        command.CommandText =
+                            $"INSERT INTO table_log (kinds, messages) VALUES ('{kind}', '{message}');";
+                        command.ExecuteNonQuery();
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    throw new Exception(
+                        "Невозможно открыть подключение без указания источника данных или сервера или  подключение уже открыто.");
+                }
+                catch (SqliteException)
+                {
+                    throw new Exception("A SQLite error occurs during execution");
+                }
+            }
         }
-
-        
-
-
-    }
 
 }
