@@ -38,27 +38,21 @@ namespace Logger
                 Msg?.Invoke("Отказано в доступе");
                 throw new Exception("Отказано в доступе");
             }
-
             catch (ArgumentException)
             {
                 Msg?.Invoke("Параметр path пуст");
                 throw new Exception("Параметр path пуст");
             }
-
             catch (DirectoryNotFoundException)
             {
                 Msg?.Invoke("Указан недопустимый путь (например, он ведет на несопоставленный диск)");
                 throw new Exception("Указан недопустимый путь (например, он ведет на несопоставленный диск)");
             }
-
             catch (PathTooLongException)
             {
-                Msg?.Invoke(
-                    "Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
-                throw new Exception(
-                    "Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
+                Msg?.Invoke("Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
+                throw new Exception("Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
             }
-
             catch (IOException)
             {
                 Msg?.Invoke(
@@ -66,7 +60,6 @@ namespace Logger
                 throw new Exception(
                     "Параметр path включает неверный или недопустимый синтаксис имени файла, имени каталога или метки тома");
             }
-
             catch (ObjectDisposedException)
             {
                 Msg?.Invoke("Удалено средство записи потока");
