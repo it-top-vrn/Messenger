@@ -130,6 +130,7 @@ public class LogToDB
                 }
                 catch (SqliteException)
                 {
+                    
                     mes?.Invoke("Ошибка sqlite во время выполнения");
                     throw new Exception("Ошибка sqlite во время выполнения");
                 }
