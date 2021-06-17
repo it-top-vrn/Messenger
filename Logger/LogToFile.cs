@@ -31,8 +31,6 @@ namespace Logger
                 await using var file = new StreamWriter(_path, true);
                 await file.WriteLineAsync(message);
             }
-
-
             catch (UnauthorizedAccessException)
             {
                 Msg?.Invoke("Отказано в доступе");
