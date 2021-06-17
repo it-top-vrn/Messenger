@@ -14,7 +14,6 @@ namespace Logger
             try
             {
                 using (var connection = new SqliteConnection("Data Source=logdata.db"))
-
                 {
                     connection.Open();
 
