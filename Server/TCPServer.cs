@@ -1,19 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 
 namespace Server
 {
     public class TCPServer
     {
-        protected IPEndPoint _ipServer;
-        protected int _port;
-        protected IPAddress _ip;
-        protected Socket _socket;
+        public IPEndPoint _ipServer;
+        public int _port;
+        public IPAddress _ip;
+        public Socket _socket;
+
+        //TODO уточнить наименования
+        public Dictionary<string, User> clients = new Dictionary<string, User>();
+        public Dictionary<string, Message> messages = new Dictionary<string, Message>();
 
         public TCPServer()
         {
+
             _ip = IPAddress.Parse("127.0.0.1");
             _port = 8005;
             _ipServer = new IPEndPoint(_ip, _port);
@@ -96,6 +103,44 @@ namespace Server
             return true;
         }
 
+        public bool SendMessageToClient(string name, Message msg)
+        {
+            try
+            {
+                var msg_send = JsonSerializer.Serialize(msg);
+                clients[name].tcpclient.SendMessage(msg_send);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public Dictionary<string, User> GetClientList()
+        {
+            return clients;
+        }
+
+        public void AddMessage(string str, Message message)
+        {
+            messages.Add(str, message);
+        }
+
+        public bool SendMsgToDB(Message msg)
+        {
+            // Методы подключения к БДхе
+            return true;
+        }
+
+        public bool SendToJournal()
+        {
+
+            // Методы журналирования    
+            return true;
+        }
+
         public bool Start()
         {
             try
@@ -111,7 +156,67 @@ namespace Server
             return true;
         }
 
-        /*public TCPClient NewClient()
+        public void AuthorizeClient(TCPClient tcpclient)
+        {
+
+            //var nickname = client.nickname;
+            //var password = client.password;
+            var client_str= GetMessage();
+            var newClient = JsonSerializer.Deserialize<User>(client_str);
+            newClient.AddTCPClient(tcpclient);
+            var nickname = newClient.nickname;
+            var password = newClient.password;
+
+            try
+            {
+                clients.Add(nickname, newClient);
+                // Добавление в DB 
+                SendMessageToClient(nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = "Регистрация завершена успешно."
+
+                });
+
+                Console.WriteLine($"{nickname} {DateTime.Now:u}: Регистрация завершена успешно.");
+            }
+            catch (ArgumentNullException)
+            {
+                SendMessageToClient(nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = "Отказ регистрации. Пожалуйста, введите никнейм и пароль."
+                });
+                Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Неудачная попытка регистрации: Отсутствие данных");
+                throw new Exception();
+            }
+            catch (ArgumentException)
+            {
+                var existing_client = clients[nickname];
+                if (existing_client.password == password)
+                {
+                    SendMessageToClient(nickname, new Message
+                    {
+                        Date = $"{DateTime.Now:u}",
+                        Msg = "Авторизация завершена успешно."
+                    });
+                    Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Авторизация завершена успешно.");
+                }
+                else
+                {
+                    SendMessageToClient(nickname, new Message
+                    {
+                        Date = $"{DateTime.Now:u}",
+                        Msg = "Отказ Авторизации. Неправельный пароль."
+                    });
+                    Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Неудачная попытка авторизации: Неправельный пароль.");
+                    throw new Exception();
+                }
+            }
+
+        }
+
+        public TCPClient NewClient()
         {
             try
             {
@@ -122,6 +227,6 @@ namespace Server
             {
                 throw new Exception("Ошибка соединения с клиентом");
             }
-        }*/
+        }
     }
 }
