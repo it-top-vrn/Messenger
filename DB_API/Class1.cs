@@ -176,25 +176,25 @@ namespace ConsoleApp10
         }
 
 
-        public bool Drop(string senderID, string recepientID)
+        public void Drop(string senderID, string recepientID)
         {
-            bool drop = false;
+           
             db.Open();
             try
             {
                 MySqlCommand command = new MySqlCommand($"DROP TABLE {senderID + "_" + recepientID}", db);
                 command.ExecuteNonQuery();
-                drop = true;
+               
             }
             catch (Exception e)
             {
                 MySqlCommand command = new MySqlCommand($"DROP TABLE {recepientID + "_" + senderID}", db);
                 command.ExecuteNonQuery();
-                drop = true;
+              
             }
 
             db.Close();
-            return drop;
+           
         }
     }
 }
