@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks.Dataflow;
 
 namespace Server
 {
@@ -17,7 +18,9 @@ namespace Server
         //TODO уточнить наименования
         public Dictionary<string, User> clients = new Dictionary<string, User>();
         public Dictionary<string, Message> messages = new Dictionary<string, Message>();
-
+        public Dictionary<string, List<Message>> chats = new Dictionary<string, List<Message>>(); 
+        
+        
         public TCPServer()
         {
 
@@ -155,17 +158,74 @@ namespace Server
 
             return true;
         }
-
-        public void AuthorizeClient(TCPClient tcpclient)
+        
+        public void RegisterClient(TCPClient tcpclient, string nickname, string password)
         {
+            
+            var newClient = new User
+            {
+                tcpclient = tcpclient,
+                nickname = nickname,
+                password = password
+            };
 
-            //var nickname = client.nickname;
-            //var password = client.password;
-            var client_str= GetMessage();
-            var newClient = JsonSerializer.Deserialize<User>(client_str);
-            newClient.AddTCPClient(tcpclient);
-            var nickname = newClient.nickname;
-            var password = newClient.password;
+            try
+            {
+                clients.Add(nickname, newClient);
+                // Добавление в DB 
+                SendMessageToClient(nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = "Регистрация завершена успешно."
+                    
+                });
+                
+                Console.WriteLine($"{nickname} {DateTime.Now:u}: Регистрация завершена успешно.");
+            }
+            catch (ArgumentNullException)
+            {
+                SendMessageToClient(nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = "Отказ регистрации. Пожалуйста, введите никнейм и пароль."
+                });
+                Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Неудачная попытка регистрации: Отсутствие данных");
+                throw new Exception();
+            }
+            catch (ArgumentException)
+            {
+                var existing_client = clients[nickname];
+                if (existing_client.password == password)
+                {
+                    SendMessageToClient(nickname, new Message
+                    {
+                        Date = $"{DateTime.Now:u}",
+                        Msg = $"Отказ регистрации. Никнейм {nickname} уже занят."
+                    });
+                    Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Отказ регистрации. Попытка повторной регистрации.");
+                }
+                else
+                {
+                    SendMessageToClient(nickname, new Message
+                    {
+                        Date = $"{DateTime.Now:u}",
+                        Msg = "Отказ Авторизации. Неправельный пароль."
+                    });
+                    Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Неудачная попытка авторизации: Неправельный пароль.");
+                    throw new Exception();
+                }
+            }
+
+        }
+
+        public void AuthorizeClient(TCPClient tcpclient, string nickname, string password)
+        {
+            var newClient = new User
+            {
+                tcpclient = tcpclient,
+                nickname = nickname,
+                password = password
+            };
 
             try
             {

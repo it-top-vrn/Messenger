@@ -21,14 +21,15 @@ namespace Server
                  
                 try
                 {
-
-                    server.AuthorizeClient(newTCPClient);
+                    var temp = server.GetMessage();
+                    string nickname = "login";
+                    string password = "pass";
+                    server.AuthorizeClient(newTCPClient, nickname, password);
                 }
                 catch (Exception e)
                 {
                     break;
                 }
-
 
                 var client = server.NewClient();
 
