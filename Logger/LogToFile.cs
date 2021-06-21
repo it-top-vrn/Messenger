@@ -1,20 +1,16 @@
 ﻿using System;
 using System.IO;
-
 namespace Logger
-{ 
-    public delegate void Message(string message);
+{ public delegate void Message(string message);
     
     public class LogToFile : ILogger
     {
         public event Message Msg;
         private readonly string _path;
-
         public LogToFile(string path)
         {
             _path = path;
         }
-        
         private void WriteToFile(string timeAndKind, string message)
         {
             try
