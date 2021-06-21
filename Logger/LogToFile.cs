@@ -1,12 +1,13 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
+
 
 namespace Logger
 {
     public delegate void Message(string message);
 
-    public class LogToFile
+
+    public class LogToFile : ILogger
     {
         public event Message Msg;
         private readonly string _path;
@@ -16,20 +17,13 @@ namespace Logger
             _path = path;
         }
 
-        public enum LogType
-        {
-            Info,
-            Success,
-            Error,
-            Warning
-        }
 
-        private async Task WriteToFile(string message)
+        private void WriteToFile(string timeAndKind, string message)
         {
             try
             {
-                await using var file = new StreamWriter(_path, true);
-                await file.WriteLineAsync(message);
+                using var file = new StreamWriter(_path, true);
+                file.WriteLineAsync(timeAndKind + message);
             }
             catch (UnauthorizedAccessException)
             {
@@ -48,8 +42,10 @@ namespace Logger
             }
             catch (PathTooLongException)
             {
-                Msg?.Invoke("Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
-                throw new Exception("Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
+                Msg?.Invoke(
+                    "Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
+                throw new Exception(
+                    "Указанный путь, имя файла или оба значения превышают максимальную длину, заданную в системе");
             }
             catch (IOException)
             {
@@ -71,34 +67,34 @@ namespace Logger
             }
         }
 
-        public async Task LogInfo(string message)
+        public void LogInfo(string message)
         {
-            await WriteToFile($"{DateTime.Now:u} [INFO] {message}");
+            WriteToFile($"{DateTime.Now:u} [INFO]", message);
         }
 
-        public async Task LogError(string message)
+        public void LogError(string message)
         {
-            await WriteToFile($"{DateTime.Now:u} [ERROR] {message}");
+            WriteToFile($"{DateTime.Now:u} [ERROR]", message);
         }
 
-        public async Task LogWarning(string message)
+        public void LogWarning(string message)
         {
-            await WriteToFile($"{DateTime.Now:u} [WARNING] {message}");
+            WriteToFile($"{DateTime.Now:u} [WARNING]", message);
         }
 
-        public async Task LogSuccess(string message)
+        public void LogSuccess(string message)
         {
-            await WriteToFile($"{DateTime.Now:u} [SUCCESS] {message}");
+            WriteToFile($"{DateTime.Now:u} [SUCCESS]", message);
         }
 
-        public async Task LogCustom(string type, string message)
+        public void LogCustom(string type, string message)
         {
-            await WriteToFile($"{DateTime.Now:u} [{type}] {message}");
+            WriteToFile($"{DateTime.Now:u} [{type}]", message);
         }
 
-        public async Task Log(LogType type, string message)
+        public void Log(LogType type, string message)
         {
-            await WriteToFile($"{DateTime.Now:u} [{type.ToString()}] {message}");
+            WriteToFile($"{DateTime.Now:u} [{type.ToString()}]", message);
         }
     }
 }
