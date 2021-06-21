@@ -1,12 +1,10 @@
 ﻿using System;
 using System.IO;
 
-
 namespace Logger
-{
+{ 
     public delegate void Message(string message);
-
-
+    
     public class LogToFile : ILogger
     {
         public event Message Msg;
@@ -16,8 +14,7 @@ namespace Logger
         {
             _path = path;
         }
-
-
+        
         private void WriteToFile(string timeAndKind, string message)
         {
             try
