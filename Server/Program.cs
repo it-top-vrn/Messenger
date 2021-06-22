@@ -47,6 +47,11 @@ namespace Server
         }*/
 
 
+        static void Registration()
+        {
+
+        }
+
 
 
 

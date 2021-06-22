@@ -18,9 +18,9 @@ namespace Server
         //TODO уточнить наименования
         public Dictionary<string, User> clients = new Dictionary<string, User>();
         public Dictionary<string, Message> messages = new Dictionary<string, Message>();
-        public Dictionary<string, List<Message>> chats = new Dictionary<string, List<Message>>(); 
-        
-        
+        public Dictionary<string, List<Message>> chats = new Dictionary<string, List<Message>>();
+
+
         public TCPServer()
         {
 
@@ -158,10 +158,10 @@ namespace Server
 
             return true;
         }
-        
-        public void RegisterClient(TCPClient tcpclient, string nickname, string password)
+
+        public User RegisterClient(TCPClient tcpclient, string nickname, string password)
         {
-            
+
             var newClient = new User
             {
                 tcpclient = tcpclient,
@@ -177,10 +177,11 @@ namespace Server
                 {
                     Date = $"{DateTime.Now:u}",
                     Msg = "Регистрация завершена успешно."
-                    
+
                 });
-                
+
                 Console.WriteLine($"{nickname} {DateTime.Now:u}: Регистрация завершена успешно.");
+                return newClient;
             }
             catch (ArgumentNullException)
             {
@@ -194,28 +195,53 @@ namespace Server
             }
             catch (ArgumentException)
             {
-                var existing_client = clients[nickname];
-                if (existing_client.password == password)
+
+
+                SendMessageToClient(nickname, new Message
                 {
-                    SendMessageToClient(nickname, new Message
-                    {
-                        Date = $"{DateTime.Now:u}",
-                        Msg = $"Отказ регистрации. Никнейм {nickname} уже занят."
-                    });
-                    Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Отказ регистрации. Попытка повторной регистрации.");
-                }
-                else
-                {
-                    SendMessageToClient(nickname, new Message
-                    {
-                        Date = $"{DateTime.Now:u}",
-                        Msg = "Отказ Авторизации. Неправельный пароль."
-                    });
-                    Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Неудачная попытка авторизации: Неправельный пароль.");
-                    throw new Exception();
-                }
+                    Date = $"{DateTime.Now:u}",
+                    Msg = $"Отказ регистрации. Никнейм {nickname} уже занят."
+                });
+                Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Отказ регистрации. Попытка повторной регистрации.");
+                throw new ArgumentException();
             }
 
+        }
+
+        public User Authorization(TCPClient tcpclient, string nickname, string password)
+        {
+            //TODO все сообщения переместить в соответствующие методы в прогрем
+            if (nickname == "" || password == "")
+            {
+                throw new ArgumentNullException();
+            }
+            var newClient = new User
+            {
+                tcpclient = tcpclient,
+                nickname = nickname,
+                password = password
+            };
+
+            if (clients.ContainsKey(nickname) && clients[nickname].password == password)
+            {
+                SendMessageToClient(nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = "Авторизация завершена успешно."
+                });
+                Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Авторизация завершена успешно.");
+                return newClient;
+            }
+            else
+            {
+                SendMessageToClient(nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = "Отказ Авторизации. Неправельный логин или пароль."
+                });
+                Console.WriteLine($"Клиент {nickname} {DateTime.Now:u}: Неудачная попытка авторизации: Неправельный логин или пароль.");
+                throw new ArgumentException();
+            }
         }
 
         public void AuthorizeClient(TCPClient tcpclient, string nickname, string password)
