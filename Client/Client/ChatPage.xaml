@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Client.ChatPage">
+    <StackLayout>
+
+        <ScrollView >
+            <StackLayout x:Name="Chat_StackLayout">
+                <BoxView x:Name="Chat_boxviev" CornerRadius="30" >
+
+
+                </BoxView>
+
+            </StackLayout>
+        </ScrollView>
+
+
+        <Frame BorderColor="Blue"  VerticalOptions="EndAndExpand">
+            <StackLayout  VerticalOptions="EndAndExpand">
+                <Entry x:Name="Entry_chat" Keyboard="Chat"></Entry>
+                <Button x:Name ="Send_button" Text="Отправить" BackgroundColor="Green" Clicked="Send_button_Clicked"  ></Button>
+            </StackLayout>
+        </Frame>
+        <Frame BackgroundColor="LightGray" BorderColor="DarkGray">
+
+            <StackLayout Orientation="Horizontal" VerticalOptions="EndAndExpand" >
+                <Button x:Name="contacts_button" HorizontalOptions="StartAndExpand"  Text ="Контакты" Clicked="contacts_button_Clicked" ></Button>
+                <Button x:Name="status_button" HorizontalOptions="CenterAndExpand"  Text ="Список чатов" Clicked="status_button_Clicked"></Button>
+                <Button x:Name="chats_button" HorizontalOptions="CenterAndExpand" Text ="Текущий чат"></Button>
+                <Button x:Name="settings_button" HorizontalOptions="EndAndExpand" Text="Настройки" Clicked="settings_button_Clicked"></Button>
+            </StackLayout>
+        </Frame>
+
+    </StackLayout>
+</ContentPage>
