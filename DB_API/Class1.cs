@@ -196,5 +196,44 @@ namespace ConsoleApp10
             db.Close();
            
         }
+         
+        public List<string> GetContactsList(string nickName)
+        {
+            db.Open();
+            string contactStr = "";
+            List<string> contactsPool = new List<string>();
+            MySqlCommand command = new MySqlCommand($"SELECT contacts FROM table_user WHERE NICKNAME = '{nickName}'", db);
+            MySqlDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                contactStr = reader["contacts"].ToString();
+            }
+            foreach (var substr in contactStr.Split(';'))
+            {
+                contactsPool.Add(substr);
+            }
+            db.Close();
+            return contactsPool;
+        }
+       
+        
+        public void InsertContact(string nickName, string contact)
+        {
+            db.Open();
+            string contactStr = "";
+            MySqlCommand command = new MySqlCommand($"SELECT contacts FROM table_user WHERE NICKNAME = '{nickName}'", db);
+            MySqlDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                contactStr = reader["contacts"].ToString();
+            }
+            reader.Close();
+            contactStr = contactStr + contact + ";";
+            MySqlCommand insertContact = new MySqlCommand($"UPDATE table_user SET contacts = '{contactStr}' WHERE NICKNAME = '{nickName}' ", db);
+            insertContact.ExecuteNonQuery();
+            db.Close();
+           
+        }
+      
     }
 }
