@@ -28,129 +28,64 @@ namespace Server
                     tcpclient = newTCPClient
                 };
                 Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент подключился.");
-                
-                try
-                {
-                    Registration_Authorization(server, newClient, option);
-                }
-                catch (Exception e)
-                {
-                    server.SendMessageToClient(newClient.nickname, new Message
-                    {
-                        Date = $"{DateTime.Now:u}",
-                        Msg = $"Выход из программы."
-                    });
-                    newTCPClient.Close();
-                    Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент отключился.");
-                    break;
-                }
+                var task = Task.Run(() => TaskClient(newTCPClient));
+                /* try
+                 {
+                     Registration_Authorization(server, newClient, option);
+                 }
+                 catch (Exception e)
+                 {
+                     server.SendMessageToClient(newClient.nickname, new Message
+                     {
+                         Date = $"{DateTime.Now:u}",
+                         Msg = $"Выход из программы."
+                     });
+                     newTCPClient.Close();
+                     Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент отключился.");
+                     break;
+                 }
 
-               
-                var task = Task.Run(() => MsgHandler(server));
+                 var task = Task.Run(() => MsgHandler(server));*/
             }
         }
 
-        /*static bool Registration_Authorization(TCPServer server, User newClient,string option)
+        static void TaskClient(TCPClient client)
         {
-            var db_api = new DB_api();
-            db_api.Connect();
-            if (newClient.nickname == "" || newClient.password == "")
+            var name = "Анон";
+            var name_temp = JsonSerializer.Deserialize<Message>(client.GetMessage());
+            if (name_temp.Type == TypeMessage.Name)
             {
-                string temp = "регистрации";
-                if (option == "2")
+                name = name_temp.Msg;
+                ShowInfo($"Клиент {name} подключился");
+            }
+
+            while (true)
+            {
+                var msg_temp = JsonSerializer.Deserialize<Message>(client.GetMessage());
+                if (msg_temp.Type == TypeMessage.Stop)
                 {
-                    temp = "аутентификации";
+                    ShowInfo("Клиент отключился...");
+                    break;
                 }
-                // Журналирование
-                server.SendMessageToClient(newClient.nickname, new Message
+
+                if (msg_temp.Type == TypeMessage.Message)
                 {
-                    Date = $"{DateTime.Now:u}",
-                    Msg = "Отказ {temp}. Пожалуйста, введите никнейм и пароль."
-                });
-                Console.WriteLine(
-                    $"Клиент {newClient.nickname} {DateTime.Now:u}: Неудачная попытка {temp}: Отсутствие данных");
-                throw new Exception();
-            }
-            
-            switch (option)
-            {
-                case "1":
+                    ShowInfo($"Сообщение от {name}: {msg_temp.Msg}");
+                }
 
-                    try
-                    {
-                        server.Registeration(newClient);
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = "Регистрация завершена успешно."
-
-                        });
-                    }
-                    catch (ArgumentNullException)
-                    {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = "Отказ регистрации. Пожалуйста, введите никнейм и пароль."
-                        });
-                        Console.WriteLine(
-                            $"Клиент {newClient.nickname} {DateTime.Now:u}: Неудачная попытка регистрации: Отсутствие данных");
-                        throw new Exception();
-                    }
-                    catch (ArgumentException)
-                    {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = $"Отказ регистрации. Никнейм {newClient.nickname} уже занят."
-                        });
-                        Console.WriteLine(
-                            $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ регистрации. Попытка повторной регистрации.");
-                        throw new Exception();
-                    }
-                    break;
-                
-                case "2":
-                    try
-                    {
-                        server.Authorization(newClient);
-                    }
-                    catch (ArgumentNullException)
-                    {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = "Отказ авторизации. Пожалуйста, введите никнейм и пароль."
-                        });
-                        Console.WriteLine(
-                            $"Клиент {newClient.nickname} {DateTime.Now:u}: Неудачная попытка авторизации: Отсутствие данных");
-                        throw new Exception();
-                    }
-                    catch (ArgumentException)
-                    {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = $"Отказ авторизации. Неправельный логин или пароль."
-                        });
-                        Console.WriteLine(
-                            $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ авторизации. Неправельный логин или пароль.");
-                        throw new Exception();
-                    }
-                    break;
-                
-                default: 
-                    break;
+                client.SendMessage(MessageTypeMessage("Сообщение получено"));
             }
-            return true;
-        }*/
-    
+            client.Close();
+        }
+
+        /*
         static bool Registration_Authorization(TCPServer server, User newClient,string option)
         {
             var db_api = new DB_api();
             db_api.Connect();
             if (newClient.nickname == String.Empty || newClient.password == String.Empty)
             {
+                server.AddClient(newClient.nickname, newClient);
                 string temp = "регистрации";
                 if (option == "2")
                 {
@@ -170,73 +105,26 @@ namespace Server
             switch (option)
             {
                 case "1":
-                    
-                    if (db_api.Registration(newClient.nickname, newClient.password))
-                    {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = "Регистрация завершена успешно."
 
-                        });
-                        // Журналирование
-                    }
-                    else
+                    try
                     {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = $"Отказ регистрации. Никнейм {newClient.nickname} уже занят."
-                        });
-                        Console.WriteLine(
-                            $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ регистрации. Попытка повторной регистрации.");
-                        // Журналирование
+                        Registration(server, newClient, db_api);
+                    }
+                    catch (Exception)
+                    {
+
                         throw new Exception();
                     }
                     break;
                 
                 case "2":
-                    if (db_api.Authentication(newClient.nickname, newClient.password))
-                    {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = "Регистрация завершена успешно."
-
-                        });
-                        Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Успешная авторизация.");
-
-                        //Журналирование успех
-                    } else
-                    {
-                        // Журналирование
-                        throw new ArgumentException();
-                    }
-                    
                     try
                     {
-                        server.Authorization(newClient);
+                        Authorization(server, newClient, db_api);
                     }
-                    catch (ArgumentNullException)
+                    catch (Exception)
                     {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = "Отказ авторизации. Пожалуйста, введите никнейм и пароль."
-                        });
-                        Console.WriteLine(
-                            $"Клиент {newClient.nickname} {DateTime.Now:u}: Неудачная попытка авторизации: Отсутствие данных");
-                        throw new Exception();
-                    }
-                    catch (ArgumentException)
-                    {
-                        server.SendMessageToClient(newClient.nickname, new Message
-                        {
-                            Date = $"{DateTime.Now:u}",
-                            Msg = $"Отказ авторизации. Неправельный логин или пароль."
-                        });
-                        Console.WriteLine(
-                            $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ авторизации. Неправельный логин или пароль.");
+
                         throw new Exception();
                     }
                     break;
@@ -246,13 +134,66 @@ namespace Server
             }
             return true;
         }
-        
-        
-        static void ClientDisconnect(TCPClient client)
+
+        static void Registration(TCPServer server, User newClient, ref DB_api db_api)
         {
-            client.Close();
-            ShowInfo("Клиент отключился...");
-            // Изменение статуса в БД
+            if (db_api.Registration(newClient.nickname, newClient.password))
+            {
+                server.SendMessageToClient(newClient.nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = "Регистрация завершена успешно."
+
+                });
+                // Журналирование
+            }
+            else
+            {
+                server.SendMessageToClient(newClient.nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = $"Отказ регистрации. Никнейм {newClient.nickname} уже занят."
+                });
+                Console.WriteLine(
+                    $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ регистрации. Попытка повторной регистрации.");
+                // Журналирование
+                throw new Exception();
+            }
+        }
+
+        static void Authorization(TCPServer server, User newClient, ref DB_api db_api)
+        {
+            if (db_api.Authentication(newClient.nickname, newClient.password))
+            {
+                server.SendMessageToClient(newClient.nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = "Регистрация завершена успешно."
+
+                });
+                Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Успешная авторизация.");
+
+                //Журналирование успех
+            }
+            else
+            {
+                server.SendMessageToClient(newClient.nickname, new Message
+                {
+                    Date = $"{DateTime.Now:u}",
+                    Msg = $"Отказ авторизации. Неправельный никнейм или пароль."
+                });
+                Console.WriteLine(
+                    $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ авторизации. Неправельный никнейм или пароль.");
+                // Журналирование
+                throw new ArgumentException();
+            }
+        }
+        */
+        static void ClientDisconnect(User client, TCPServer server)
+        {
+            server.DeleteClient(client.nickname);
+            client.tcpclient.Close();
+            ShowInfo("Клиент отключился..."); 
             // Добаление записи в журнал
         }
 
@@ -284,15 +225,6 @@ namespace Server
                     Date = $"{DateTime.Now:u}",
                     Msg = $"{sender_name} {msg_temp.Date}: {msg_temp.Msg}"
                 });
-            }
-        }
-
-        static void TaskClient(TCPClient client)
-        {
-            //var newClient = JsonSerializer.Deserialize<User>(client);
-            while (true)
-            {
-
             }
         }
 

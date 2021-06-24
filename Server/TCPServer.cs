@@ -57,6 +57,21 @@ namespace Server
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
 
+        public bool Start()
+        {
+            try
+            {
+                _socket.Bind(_ipServer);
+                _socket.Listen(10);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public bool Close()
         {
             try
@@ -136,110 +151,9 @@ namespace Server
             clients.Add(nickname, client);
         }
 
-        public bool SendMsgToDB(Message msg)
+        public void DeleteClient(string nickname)
         {
-            // Методы подключения к БДхе
-            return true;
-        }
-
-        public bool SendToJournal()
-        {
-
-            // Методы журналирования    
-            return true;
-        }
-
-        public bool Start()
-        {
-            try
-            {
-                _socket.Bind(_ipServer);
-                _socket.Listen(10);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        /*public void Registeration(User newClient)
-        {
-            try
-            {
-                clients.Add(newClient.nickname, newClient);
-                // Добавление в DB 
-                // Журналирование
-            }
-            catch (ArgumentNullException)
-            {
-                // Журналирование
-                throw new ArgumentNullException();
-            }
-            catch (ArgumentException)
-            {
-                // Журналирование
-                throw new ArgumentException();
-            }
-
-        }*/
-
-        public void Registeration(User newClient)
-        {
-            var db_api = new DB_api();
-            db_api.Connect();
-
-            if (newClient.nickname == String.Empty || newClient.password == String.Empty)
-            {
-                throw new ArgumentNullException();
-            }
-
-            if (db_api.Registration(newClient.nickname, newClient.password))
-            {
-                // Журналирование
-            }
-            else
-            {
-                // Журналирование
-                throw new ArgumentException();
-            }
-
-        }
-        /*public void Authorization(User newClient)
-        {
-            if (newClient.nickname == "" || newClient.password == "")
-            {
-                // Журналирование
-                throw new ArgumentNullException();
-                
-            }
-            
-            if (!clients.ContainsKey(newClient.nickname) && clients[newClient.nickname].password != newClient.password)
-            {
-                // Журналирование
-                throw new ArgumentException();
-            }
-        }*/
-        public void Authorization(User newClient)
-        {
-            var db_api = new DB_api();
-            db_api.Connect();
-            if (newClient.nickname == "" || newClient.password == "")
-            {
-                // Журналирование
-                throw new ArgumentNullException();
-                
-            }
-
-            if (db_api.Authentication(newClient.nickname, newClient.password))
-            {
-                //Журналирование успех
-            } else
-            {
-                // Журналирование
-                throw new ArgumentException();
-            }
+            clients.Remove(nickname);
         }
 
         public TCPClient NewClient()
@@ -248,6 +162,14 @@ namespace Server
             {
                 var client = new TCPClient(_socket.Accept());
                 return client;
+            }
+            catch (InvalidOperationException)
+            {
+                throw new Exception("Ошибка соединения с клиентом");
+            }
+            catch (SocketException)
+            {
+                throw new Exception("Ошибка соединения с клиентом");
             }
             catch (Exception)
             {
