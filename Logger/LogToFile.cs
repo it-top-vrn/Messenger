@@ -9,6 +9,10 @@ namespace Logger
         private readonly string _path;
         public LogToFile(string path)
         {
+            if (!Directory.Exists(path)) 
+            {
+                Directory.CreateDirectory(path);
+            }
             _path = path;
         }
         private void WriteToFile(string timeAndKind, string message)
