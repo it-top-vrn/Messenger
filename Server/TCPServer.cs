@@ -55,6 +55,7 @@ namespace Server
             }
             _ipServer = new IPEndPoint(_ip, _port);
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            
         }
 
         public bool Start()
@@ -62,7 +63,7 @@ namespace Server
             try
             {
                 _socket.Bind(_ipServer);
-                _socket.Listen(10);
+                _socket.Listen();
             }
             catch (Exception)
             {

@@ -11,12 +11,11 @@ namespace Server
         private static void Main()
         {
             ShowInfo("Сервер запущен");
-            var server = new TCPServer("192.168.0.168", 8005);
+            var server = new TCPServer("127.0.0.1", 8005);
             server.Start();
             ShowInfo("Ожидаю подключение...");
             while (true)
             {
-
                 var newTCPClient = server.NewClient();
                 string nickname = "login";
                 string password = "pass";
@@ -28,8 +27,8 @@ namespace Server
                     tcpclient = newTCPClient
                 };
                 Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент подключился.");
-                var task = Task.Run(() => TaskClient(newTCPClient));
-                /* try
+                
+                 try
                  {
                      Registration_Authorization(server, newClient, option);
                  }
@@ -45,7 +44,7 @@ namespace Server
                      break;
                  }
 
-                 var task = Task.Run(() => MsgHandler(server));*/
+                 var task = Task.Run(() => MsgHandler(server));
             }
         }
 
@@ -78,7 +77,7 @@ namespace Server
             client.Close();
         }
 
-        /*
+        
         static bool Registration_Authorization(TCPServer server, User newClient,string option)
         {
             var db_api = new DB_api();
@@ -188,7 +187,7 @@ namespace Server
                 throw new ArgumentException();
             }
         }
-        */
+        
         static void ClientDisconnect(User client, TCPServer server)
         {
             server.DeleteClient(client.nickname);
@@ -228,11 +227,33 @@ namespace Server
             }
         }
 
+        static public List<string> GiveMeContactList(User client, TCPServer server, DB_api db_api)
+        {
+           //Журналирование 
+           return db_api.GetContactList(client.nickname);
+        }
+
         static void ShowInfo(string message)
         {
             Console.ForegroundColor = ConsoleColor.DarkBlue;
             Console.WriteLine(message);
             Console.ResetColor();
+        }
+
+        static void DropTheChat(User sender, User receiver, DB_api db_api)
+        {
+            db_api.Drop(sender.nickname, receiver.nickname);
+            //db_api.Удалить контакт
+            //Журналирование
+        }
+
+        static List<string> GiveMeMassegeList(User sender, User receiver, DB_api db_api)
+        {
+            var msgList = db_api.GetMsgList(sender.nickname, receiver.nickname);
+            
+            
+
+            return db_api.GetMsgList(sender.nickname, receiver.nickname);
         }
 
         static string MessageTypeMessage(string message)
@@ -245,6 +266,8 @@ namespace Server
             return msg_send;
         }
 
+        
+            
 
     }
 }
