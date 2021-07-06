@@ -14,12 +14,7 @@ namespace Server
         public int _port;
         public IPAddress _ip;
         public Socket _socket;
-
-        //TODO уточнить наименования
-        public Dictionary<string, User> clients = new Dictionary<string, User>();
-        public Dictionary<string, Message> messages = new Dictionary<string, Message>();
-        public Dictionary<string, List<Message>> chats = new Dictionary<string, List<Message>>();
-
+        public Dictionary<string, User> ActiveClients { get; set; }
 
         public TCPServer()
         {
@@ -107,27 +102,13 @@ namespace Server
             return message.ToString();
         }
 
-        public bool SendMessage(string message)
-        {
-            try
-            {
-                var buffer = Encoding.Unicode.GetBytes(message);
-                _socket.Send(buffer);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
+       
         public bool SendMessageToClient(string name, Message msg)
         {
             try
             {
                 var msg_send = JsonSerializer.Serialize(msg);
-                clients[name].tcpclient.SendMessage(msg_send);
+                ActiveClients[name].tcpclient.SendMessage(msg_send);
             }
             catch (Exception)
             {
@@ -137,24 +118,29 @@ namespace Server
             return true;
         }
 
-        public Dictionary<string, User> GetClientList()
+        public bool SendMessageToClient(string name, Request<List<Message>> request)
         {
-            return clients;
+            try
+            {
+                var msg_send = JsonSerializer.Serialize(request);
+                ActiveClients[name].tcpclient.SendMessage(msg_send);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
         }
 
-        public void AddMessage(string str, Message message)
+        public void AddActiveClient(string nickname, User client)
         {
-            messages.Add(str, message);
-        }
-
-        public void AddClient(string nickname, User client)
-        {
-            clients.Add(nickname, client);
+            ActiveClients.Add(nickname, client);
         }
 
         public void DeleteClient(string nickname)
         {
-            clients.Remove(nickname);
+            ActiveClients.Remove(nickname);
         }
 
         public TCPClient NewClient()
