@@ -133,6 +133,21 @@ namespace Server
             return true;
         }
 
+        public bool SendMessageToClient(string name, Request<List<User>> request)
+        {
+            try
+            {
+                var msg_send = JsonSerializer.Serialize(request);
+                ActiveClients[name].tcpclient.SendMessage(msg_send);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public void AddActiveClient(string nickname, User client)
         {
             ActiveClients.Add(nickname, client);

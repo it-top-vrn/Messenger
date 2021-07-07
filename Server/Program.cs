@@ -29,11 +29,7 @@ namespace Server
                 };
                 Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент подключился.");
                 
-                 try
-                 {
-                     RequestHandler(server, newClient, option);
-                 }
-                 catch (Exception e)
+                 if(!RequestHandler(server, newClient, option))
                  {
                      server.SendMessageToClient(newClient.nickname, new Message
                      {
@@ -56,6 +52,8 @@ namespace Server
             db_api.Connect();
             User sender = new User();
             User receiver = new User();
+            //var request = JsonSerializer.Deserialize<Request<string>>(server.GetMessage());
+
 
             switch (option)
             {
@@ -88,8 +86,10 @@ namespace Server
                 case "4":
                     //Add Chat
                     // выполнено в insertMessage
+                    break;
+
                 case "5":
-                    DropTheChat(sender, receiver, db_api);
+                    
                     break;
 
                 case "6":
@@ -100,11 +100,13 @@ namespace Server
 
                 case "7":
                     DropTheChat(sender, receiver, db_api, server);
-
                     break;
 
                 case "9":
-                    //Return Contact list;
+                    //db_api.GetClients()
+                    List<User> contacts = new List<User>();
+                    var response_2 = new Request<List<User>>(contacts, "3");
+                    server.SendMessageToClient(sender.nickname, response_2);
                     break;
 
                 case "10":
@@ -113,25 +115,22 @@ namespace Server
 
                 case "11":
                     //delete contact
-                    //drop chat
+                    DropTheChat(sender, receiver, db_api, server);
                     break;
                     
                 case "12":
-                    ClientDisconnect(sender.nickname, receiver.nickname, newClient, server);
-                    break;
-
-                case "13":
+                    ClientDisconnect(sender.nickname, newClient, server);
                     return false;
 
                 default:
-                    break;
+                    return false;
             }
 
             return true;
         }
 
 
-        static void Registration(TCPServer server, User newClient, ref DB_api db_api)
+        static bool Registration(TCPServer server, User newClient, ref DB_api db_api)
         {
             if (db_api.Registration(newClient.nickname, newClient.password))
             {
@@ -142,6 +141,7 @@ namespace Server
 
                 });
                 // Журналирование
+                return true;
             }
             else
             {
@@ -153,11 +153,11 @@ namespace Server
                 Console.WriteLine(
                     $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ регистрации. Попытка повторной регистрации.");
                 // Журналирование
-                throw new Exception();
+                return false;
             }
         }
 
-        static void Authorization(TCPServer server, User newClient, ref DB_api db_api)
+        static bool Authorization(TCPServer server, User newClient, ref DB_api db_api)
         {
             if (db_api.Authentication(newClient.nickname, newClient.password))
             {
@@ -170,6 +170,7 @@ namespace Server
                 Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Успешная авторизация.");
 
                 //Журналирование успех
+                return true;
             }
             else
             {
@@ -182,10 +183,11 @@ namespace Server
                     $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ авторизации. Неправельный никнейм или пароль.");
                 // Журналирование
                 throw new ArgumentException();
+                return false;
             }
         }
         
-        static void ClientDisconnect(string sender, string receiver, User client, TCPServer server)
+        static void ClientDisconnect(string sender, User client, TCPServer server)
         {
             server.DeleteClient(client.nickname);
 
@@ -227,6 +229,26 @@ namespace Server
             return chat;
         }
 
+        static List<User> ReturnContacs(string sender,  DB_API db_api)
+        {
+            List<User> clientList = db_api.GetClientList(); // нужен метод возвращающий лист клиентов из БД
+            List<string> contactList = db_api.GetContactList(sender);
+            List<User> contacts = new List<User>();
+
+            foreach (var nickname in contactList)
+            {
+                foreach (var client in clientList)
+                {
+                    if(client.nickname == nickname)
+                    {
+                        contacts.Add(client);
+                    }
+                }
+            }
+
+            return contacts;
+        }
+
         static void MessageHandler(TCPServer server)
         {
             while (true)
@@ -256,7 +278,7 @@ namespace Server
            return db_api.GetContactList(client.nickname);
         }
 
-        static void ShowInfo(string message)
+        static void  (string message)
         {
             Console.ForegroundColor = ConsoleColor.DarkBlue;
             Console.WriteLine(message);
@@ -266,8 +288,19 @@ namespace Server
         static List<string> GiveMeMassegeList(User sender, User receiver, DB_api db_api)
         {
             var msgList = db_api.GetMsgList(sender.nickname, receiver.nickname);
-            
-            
+            var list = new List<Message>();
+            foreach (var msg in msgList)
+            {
+                list.Add(
+                    new Message
+                    {
+                        Date = $"{DateTime.Now:u}",
+                        ReceiverNickname = receiver.nickname,
+                        SenderNickname = sender.nickname,
+                        Msg = msg
+                    }
+                );
+            }
 
             return db_api.GetMsgList(sender.nickname, receiver.nickname);
         }
@@ -281,9 +314,5 @@ namespace Server
             var msg_send = JsonSerializer.Serialize(msg);
             return msg_send;
         }
-
-        
-            
-
     }
 }
