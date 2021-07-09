@@ -52,15 +52,17 @@ namespace Server
             db_api.Connect();
             User sender = new User();
             User receiver = new User();
-            //var request = JsonSerializer.Deserialize<Request<string>>(server.GetMessage());
+            var request = JsonSerializer.Deserialize<Request>(server.GetMessage());
+			option = request.Type;
 
+				
 
-            switch (option)
+            switch (request.Type)
             {
                 case "1":
                     try
                     {
-                        Registration(server, newClient, db_api);
+                        Registration(server, request.Client, db_api);
                     }
                     catch (Exception)
                     {
@@ -71,7 +73,7 @@ namespace Server
                 case "2":
                     try
                     {
-                        Authorization(server, newClient, db_api);
+                        Authorization(server, request.Client, db_api);
                     }
                     catch (Exception)
                     {
@@ -93,20 +95,20 @@ namespace Server
                     break;
 
                 case "6":
-                    List<Message> chat = ReturnChat(sender.nickname, receiver.nickname, db_api);
+                    List<Message> chat = ReturnChat(requst.Message.SenderNickname, requst.Message.SenderNickname, db_api);
                     var response = new Request<List<Message>>(chat, "3");
                     server.SendMessageToClient(sender.nickname, response);
                     break;
 
                 case "7":
-                    DropTheChat(sender, receiver, db_api, server);
+                    DropTheChat(requst.Message.SenderNickname, requst.Message.ReceiverNickname, db_api, server);
                     break;
 
                 case "9":
                     //db_api.GetClients()
                     List<User> contacts = new List<User>();
                     var response_2 = new Request<List<User>>(contacts, "3");
-                    server.SendMessageToClient(sender.nickname, response_2);
+                    server.SendMessageToClient(requst.Message.SenderNickname, response_2);
                     break;
 
                 case "10":
@@ -115,11 +117,11 @@ namespace Server
 
                 case "11":
                     //delete contact
-                    DropTheChat(sender, receiver, db_api, server);
+                    DropTheChat(requst.Message.SenderNickname, requst.Message.SenderNickname, db_api, server);
                     break;
                     
                 case "12":
-                    ClientDisconnect(sender.nickname, newClient, server);
+                    ClientDisconnect(requst.Message.SenderNickname, newClient, server);
                     return false;
 
                 default:
@@ -285,9 +287,9 @@ namespace Server
             Console.ResetColor();
         }
 
-        static List<string> GiveMeMassegeList(User sender, User receiver, DB_api db_api)
+        static List<string> GiveMeMassegeList(string sender, string receiver, DB_api db_api)
         {
-            var msgList = db_api.GetMsgList(sender.nickname, receiver.nickname);
+            var msgList = db_api.GetMsgList(sender, receiver);
             var list = new List<Message>();
             foreach (var msg in msgList)
             {
@@ -295,14 +297,14 @@ namespace Server
                     new Message
                     {
                         Date = $"{DateTime.Now:u}",
-                        ReceiverNickname = receiver.nickname,
-                        SenderNickname = sender.nickname,
+                        ReceiverNickname = receiver,
+                        SenderNickname = sender,
                         Msg = msg
                     }
                 );
             }
 
-            return db_api.GetMsgList(sender.nickname, receiver.nickname);
+            return db_api.GetMsgList(sender, receiver);
         }
 
         static string MessageTypeMessage(string message)
