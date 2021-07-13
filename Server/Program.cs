@@ -13,121 +13,107 @@ namespace Server
             ShowInfo("Сервер запущен");
             var server = new TCPServer("127.0.0.1", 8005);
             server.Start();
+            var someShitAssFlag = true;
             ShowInfo("Ожидаю подключение...");
-            while (true)
+            while (someShitAssFlag)
             {
-
                 var newTCPClient = server.NewClient();
-                string nickname = "login";
-                string password = "pass";
-                string option = "1";
                 var newClient =  new User
                 {
-                    nickname = nickname,
-                    password = password,
                     tcpclient = newTCPClient
                 };
+                newClient.tcpclient.SendMessage("1");
                 Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент подключился.");
                 
-                 if(!RequestHandler(server, newClient, option))
-                 {
-                     server.SendMessageToClient(newClient.nickname, new Message
-                     {
-                         Date = $"{DateTime.Now:u}",
-                         Msg = $"Выход из программы."
-                     });
-                     newTCPClient.Close();
-                     Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент отключился.");
-                     break;
-                 }
-
-                 var task = Task.Run(() => MessageHandler(server));
+                 var task = Task.Run(() => RequestHandler(server, ref newClient, option));
             }
         }
 
 
-        static bool RequestHandler(TCPServer server, User newClient, string option)
+        static bool RequestHandler(TCPServer server, ref User newClient, string option)
         {
             var db_api = new DB_api();
             db_api.Connect();
             User sender = new User();
             User receiver = new User();
-            var request = JsonSerializer.Deserialize<Request>(server.GetMessage());
+            var request = new Request();
 			option = request.Type;
+            bool flag = true;
 
-				
-
-            switch (request.Type)
+            while (flag)
             {
-                case "1":
-                    try
-                    {
-                        Registration(server, request.Client, db_api);
-                    }
-                    catch (Exception)
-                    {
-                        throw new Exception();
-                    }
-                    break;
+                request = JsonSerializer.Deserialize<Request>(server.GetMessage());
 
-                case "2":
-                    try
-                    {
-                        Authorization(server, request.Client, db_api);
-                    }
-                    catch (Exception)
-                    {
-                        throw new Exception();
-                    }
-                    break;
+                switch (request.Type)
+                {
+                    case "1":
+                        if(!Registration(server, request.Client, db_api))
+                        {
+                            flag = false;
+                            return false;
+                        }
+                        
+                        break;
 
-                case "3":
-                    MessageHandler(server);
-                    break;
+                    case "2":
+                        if(!Authorization(server, request.Client, db_api))
+                        {
+                            flag = false;
+                            return false;
+                        }
+                        break;
 
-                case "4":
-                    //Add Chat
-                    // выполнено в insertMessage
-                    break;
+                    case "3":
+                        ClientDisconnect(requst.Message.SenderNickname, newClient, server);
+                        flag = false;
+                        break;
 
-                case "5":
-                    
-                    break;
+                    case "4":
+                        MessageHandler(server);
+                        break;
 
-                case "6":
-                    List<Message> chat = ReturnChat(requst.Message.SenderNickname, requst.Message.SenderNickname, db_api);
-                    var response = new Request<List<Message>>(chat, "3");
-                    server.SendMessageToClient(sender.nickname, response);
-                    break;
+                    case "5":
+                        
+                        break;
 
-                case "7":
-                    DropTheChat(requst.Message.SenderNickname, requst.Message.ReceiverNickname, db_api, server);
-                    break;
+                    case "6":
+                        break;
 
-                case "9":
-                    //db_api.GetClients()
-                    List<User> contacts = new List<User>();
-                    var response_2 = new Request<List<User>>(contacts, "3");
-                    server.SendMessageToClient(requst.Message.SenderNickname, response_2);
-                    break;
+                    case "7":
+                        DropTheChat(requst.Message.SenderNickname, requst.Message.ReceiverNickname, db_api, server);
+                        break;
 
-                case "10":
-                    //Add new Contact
-                    break;
+                    case "8": 
+                        List<Message> chat = ReturnChat(requst.Message.SenderNickname, requst.Message.SenderNickname, db_api);
+                        var response = new Request<List<Message>>(chat, "3");
+                        server.SendMessageToClient(sender.nickname, response);
+                        break;
+                        
 
-                case "11":
-                    //delete contact
-                    DropTheChat(requst.Message.SenderNickname, requst.Message.SenderNickname, db_api, server);
-                    break;
-                    
-                case "12":
-                    ClientDisconnect(requst.Message.SenderNickname, newClient, server);
-                    return false;
+                    case "9":
+                        //db_api.GetClients()
+                        List<User> contacts = new List<User>();
+                        var response_2 = new Request<List<User>>(contacts, "3");
+                        server.SendMessageToClient(requst.Message.SenderNickname, response_2);
+                        break;
 
-                default:
-                    return false;
-            }
+                    case "10":
+                        //Add new Contact
+                        break;
 
+                    case "11":
+                        //delete contact
+                        DropTheChat(requst.Message.SenderNickname, requst.Message.SenderNickname, db_api, server);
+                        break;
+                        
+                    case "12":
+                        
+                        return false;
+
+                    default:
+                        return true;
+                }  
+            }	
             return true;
         }
 
@@ -191,8 +177,12 @@ namespace Server
         
         static void ClientDisconnect(string sender, User client, TCPServer server)
         {
-            server.DeleteClient(client.nickname);
-
+            server.ActiveClients.Remove(client.nickname);
+            var request = new Request<string> { 
+                Type = "5",
+                Data = "Выход из аккаунта"
+            };
+            server.SendMessageToClient(sender, request);
             client.tcpclient.Close();
             Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Клиент отключился.");
             // Добаление записи в журнал
