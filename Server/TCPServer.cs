@@ -147,6 +147,20 @@ namespace Server
 
             return true;
         }
+		
+		public bool SendMessageToClient(string name, ResponseType response){
+			try
+            {
+                var msg_send = JsonSerializer.Serialize(response);
+                ActiveClients[name].tcpclient.SendMessage(msg_send);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+		}
 
         public void AddActiveClient(string nickname, User client)
         {
