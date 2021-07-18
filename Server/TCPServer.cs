@@ -118,11 +118,11 @@ namespace Server
             return true;
         }
 
-        public bool SendMessageToClient(string name, Request<List<Message>> request)
+        public bool SendMessageToClient(string name, Response<List<Message>> response)
         {
             try
             {
-                var msg_send = JsonSerializer.Serialize(request);
+                var msg_send = JsonSerializer.Serialize(response);
                 ActiveClients[name].tcpclient.SendMessage(msg_send);
             }
             catch (Exception)
@@ -133,11 +133,11 @@ namespace Server
             return true;
         }
 
-        public bool SendMessageToClient(string name, Request<List<User>> request)
+        public bool SendMessageToClient(string name, Response<List<User>> response)
         {
             try
             {
-                var msg_send = JsonSerializer.Serialize(request);
+                var msg_send = JsonSerializer.Serialize(response);
                 ActiveClients[name].tcpclient.SendMessage(msg_send);
             }
             catch (Exception)

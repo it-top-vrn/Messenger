@@ -25,45 +25,42 @@ namespace Server
                 newClient.tcpclient.SendMessage("1");
                 Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент подключился.");
                 
-                 var task = Task.Run(() => RequestHandler(server, ref newClient, option));
+                 var task = Task.Run(() => RequestHandler(server, ref newClient));
             }
         }
 
 
-        static bool RequestHandler(TCPServer server, ref User newClient, string option)
+        static bool RequestHandler(TCPServer server, ref User newClient)
         {
             var db = new DB_api();
             db.Connect();
             User sender = new User();
             User receiver = new User();
-            var request = new Request();
-			Request<User> userRequest = new Request<User>;
-			Request<Message> messageRequest = new Request<Message>; 
-			option = request.Type;
+            Request<string> request = new Request<string>();
+            Request<User> userRequest = new Request<User>();
+			Request<Message> messageRequest = new Request<Message>();
+            var logger = new LogToFile();
             bool flag = true;
 
             while (flag)
             {
-				
-                var requestJSON = JsonSerializer.Deserialize<Request>(server.GetMessage());
-				
-				try
+                try
 				{
-					reqest = JsonSerializer.Deserialize<Request>(server.GetMessage());
+					request = JsonSerializer.Deserialize<Request<string>>(server.GetMessage());
 				}
-				catch()
+				catch(JsonException)
 				{
 					try
 					{
 						messageRequest = JsonSerializer.Deserialize<Request<Message>>(server.GetMessage());
 					}
-					catch()
+					catch(JsonException)
 					{
 						try
 						{
 							userRequest = JsonSerializer.Deserialize<Request<User>>(server.GetMessage());
 						}
-						catch()
+						catch(JsonException)
 						{
 							return false;
 						}
@@ -73,7 +70,11 @@ namespace Server
                 switch (request.Type)
                 {
                     case RequestType.Registration:
-                        if(!Registration(server, request.Client, db))
+                        if(Registration(server, userRequest.Data, db, logger))
+                        {
+                            sender.nickname = userRequest.Data.nickname;
+                            sender.password = userRequest.Data.password;
+                        } else
                         {
                             flag = false;
                             return false;
@@ -81,8 +82,8 @@ namespace Server
                         
                         break;
 
-                    case RequsetType.Authorization:
-                        if(!Authorization(server, request.Client, db))
+                    case RequestType.Authorization:
+                        if(!Authorization(server, userRequest.Data, db, logger))
                         {
                             flag = false;
                             return false;
@@ -90,21 +91,21 @@ namespace Server
                         break;
 
                     case RequestType.Disconnect:
-                        ClientDisconnect(requst.Message.SenderNickname, newClient, server);
+                        ClientDisconnect(messageRequest.Data.SenderNickname, newClient, server);
                         flag = false;
                         break;
 
-                    case Requesttype.Message:
+                    case RequestType.Message:
                         MessageHandler(server);
                         break;
 
                     case RequestType.DropTheChat:
-                        DropTheChat(requst.Message.SenderNickname, requst.Message.ReceiverNickname, db, server);
+                        DropTheChat(sender.nickname, request.Data, db, server);
                         break;
 
-                    case RequestType.GiveMeMassegeList: 
-                        List<Message> chat = ReturnChat(requst.Message.SenderNickname, requst.Message.SenderNickname, db);
-                        var response = new Request<List<Message>>(chat, "3");
+                    case RequestType.GiveMeMessageList: 
+                        List<Message> chat = ReturnChat(sender.nickname, request.Data, db);
+                        var response = new Response<List<Message>> ( chat, ResponseType.RequestAccepted );
                         server.SendMessageToClient(sender.nickname, response);
                         break;
                         
@@ -112,8 +113,8 @@ namespace Server
                     case RequestType.GiveMeContactList:
                         //db_api.GetClients()
                         List<User> contacts = new List<User>();
-                        var response_2 = new Request<List<User>>(contacts, "3");
-                        server.SendMessageToClient(requst.Message.SenderNickname, response_2);
+                        var response_2 = new Response<List<User>>(contacts, ResponseType.RequestAccepted);
+                        server.SendMessageToClient(sender.nickname, response_2);
                         break;
 
                     case RequestType.AddNewContact:
@@ -121,7 +122,7 @@ namespace Server
 						
                         break;
 
-                    case RequesType.DeleteTheContact:
+                    case RequestType.DeleteTheContact:
                         //delete contact
                         break;
 
@@ -133,7 +134,7 @@ namespace Server
         }
 
 
-        static bool Registration(TCPServer server, User newClient, ref DB_api db, ref LogToFile log)
+        static bool Registration(TCPServer server, User newClient, ref DB_api db, LogToFile logger)
         {
             if (db.Registration(newClient.nickname, newClient.password))
             {
@@ -151,7 +152,7 @@ namespace Server
             }
         }
 
-        static bool Authorization(TCPServer server, User newClient, ref DB_api db)
+        static bool Authorization(TCPServer server, User newClient, ref DB_api db, LogToFile logger)
         {
             if (db.Authentication(newClient.nickname, newClient.password))
             {
@@ -181,6 +182,7 @@ namespace Server
             }
         }
         
+        //TODO исправить
         static void ClientDisconnect(string sender, User client, TCPServer server)
         {
             server.ActiveClients.Remove(client.nickname);
@@ -194,6 +196,7 @@ namespace Server
             // Добаление записи в журнал
         }
 
+        //TODO исправить
         static void DropTheChat(string sender, string receiver, DB_API db, TCPServer server)
         {
 
@@ -277,7 +280,7 @@ namespace Server
            return db.GetContactList(client.nickname);
         }
 
-        static void  (string message)
+        static void ShowInfo (string message)
         {
             Console.ForegroundColor = ConsoleColor.DarkBlue;
             Console.WriteLine(message);

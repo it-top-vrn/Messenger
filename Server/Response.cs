@@ -6,19 +6,25 @@ using System.Threading.Tasks;
 
 namespace Server
 {
-	enum ResponseType{
+	public enum ResponseType{
 		RequestAccepted, RequestDenied
 	}
 	
-    public class Response
+    public class Response<T>
     {
         ResponseType Type { get; set; }
 		List<string> Contacts { get; set; }
 		List<Message> Chat { get; set; }
+		T Data { get; set; }
+
 
         public Response(){}
 
-        
+        public Response(T data, ResponseType type)
+        {
+            Data = data;
+            Type = type;
+        }
 		
     }
 }

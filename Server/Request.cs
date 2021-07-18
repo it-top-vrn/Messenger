@@ -6,25 +6,25 @@ using System.Threading.Tasks;
 
 namespace Server
 {
-	enum RequestType{
+	public enum RequestType{
 		Registration, Authorization, Disconnect, Message, AddNewContact, DeleteTheContact, DropTheChat, GiveMeContactList, GiveMeMessageList
 	}
 	
     public class Request<T>
     {
-        RequestType Type { get; set; }
-		User Client { get; set; }
-		Message Msg { get; set; }
+        public RequestType Type { get; set; }
+		//public User Client { get; set; }
+		//public Message Msg { get; set; }
 		
 
-        T Data { get; set; }
+        public T Data { get; set; }
 
-        Request()
+        public Request()
         {
 			
         }
 
-        public Request(T data, string type)
+        public Request(T data, RequestType type)
         {
             Type = type;
             Data = data;
