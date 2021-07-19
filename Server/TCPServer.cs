@@ -103,11 +103,11 @@ namespace Server
         }
 
        
-        public bool SendMessageToClient(string name, Message msg)
+        public bool SendMessageToClient(string name, Response<Message> response)
         {
             try
             {
-                var msg_send = JsonSerializer.Serialize(msg);
+                var msg_send = JsonSerializer.Serialize(response);
                 ActiveClients[name].tcpclient.SendMessage(msg_send);
             }
             catch (Exception)

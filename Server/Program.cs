@@ -91,7 +91,7 @@ namespace Server
                 switch (request.Type)
                 {
                     case RequestType.Registration:
-                        if(Registration(server, userRequest.Data, db, logger))
+                        if(Registration(server, userRequest.Data, ref db, logger))
                         {
                             sender.nickname = userRequest.Data.nickname;
                             sender.password = userRequest.Data.password;
@@ -104,7 +104,7 @@ namespace Server
                         break;
 
                     case RequestType.Authorization:
-                        if(!Authorization(server, userRequest.Data, db, logger))
+                        if(!Authorization(server, userRequest.Data, ref db, logger))
                         {
                             flag = false;
                             return false;
@@ -112,12 +112,12 @@ namespace Server
                         break;
 
                     case RequestType.Disconnect:
-                        ClientDisconnect(sender.nickname, server);
+                        ClientDisconnect(sender.nickname, sender.tcpclient, server);
                         flag = false;
                         break;
 
                     case RequestType.Message:
-                        MessageHandler(server);
+                        MessageHandler(server, messageRequest.Data);
                         break;
 
                     case RequestType.DropTheChat:
@@ -156,18 +156,19 @@ namespace Server
 		
         static bool Registration(TCPServer server, User newClient, ref DB_api db, LogToFile logger)
         {
+            var date = DateTime.Now.ToString();
             if (db.Registration(newClient.nickname, newClient.password))
             {
 				
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
                // Журналирование
-				ShowLog(newClient.nickname, "Регистрация прошла успешно");
+				ShowLog(newClient.nickname, date,"Регистрация прошла успешно");
                 return true;
             }
             else
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
-				ShowLog(newClient.nickname, "Отказ регистрации. Никнейм уже занят, а может и еще какая-нибудь херня");
+				ShowLog(newClient.nickname, date,"Отказ регистрации. Никнейм уже занят, а может и еще какая-нибудь херня");
                 // Журналирование
                 return false;
             }
@@ -175,29 +176,29 @@ namespace Server
 
         static bool Authorization(TCPServer server, User newClient, ref DB_api db, LogToFile logger)
         {
+            var date = DateTime.Now.ToString();
             if (db.Authentication(newClient.nickname, newClient.password))
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
                 // Журналирование
-				ShowLog(newClient.nickname, "Авторизация прошла успешно");
+				ShowLog(newClient.nickname, date, "Авторизация прошла успешно");
                 return true;
             }
             else
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
-				ShowLog(newClient.nickname, "Отказ авторизации. Неправельный никнейм или пароль");
+				ShowLog(newClient.nickname, date,"Отказ авторизации. Неправельный никнейм или пароль");
                 // Журналирование
                 throw new ArgumentException();
                 return false;
             }
         }
         
-        static void ClientDisconnect(string sender, TCPServer server)
+        static void ClientDisconnect(string sender, TCPClient client, TCPServer server)
         {
-            server.ActiveClients.Remove(sender);			
-			var response = new Response<string>{Type = ResponseType.RequestAccepted};
-            server.SendMessageToClient(sender, response);
-            client.tcpclient.Close();
+            server.ActiveClients.Remove(sender);
+            server.SendMessageToClient(sender, ResponseType.RequestAccepted);
+            client.Close();
             Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Клиент отключился.");
             // Добаление записи в журнал
         }
@@ -207,11 +208,11 @@ namespace Server
         {
 
             if(db.Drop(sender, receiver)){
-				server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
+				server.SendMessageToClient(sender, ResponseType.RequestAccepted);
 				Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Удаление беседы {sender}-{receiver}.");
 				// журналирование
 			} else {
-				server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
+				server.SendMessageToClient(sender, ResponseType.RequestDenied);
 				Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Ошибка при удалениие беседы {sender}-{receiver}.");
 				// журналирование
 			}
@@ -261,21 +262,22 @@ namespace Server
         {
             var sender = msg_temp.SenderNickname;
             var receiver = msg_temp.ReceiverNickname;
-			var msg = new Message{
-				SenderNickname = sender,
-				ReceiverNickname = receiver,
-				Date = $"{DateTime.Now:u}",
-				Msg = $"Вы {msg_temp.Date}: {msg_temp.Msg}"
-			}
+            var msg = new Message
+            {
+                SenderNickname = sender,
+                ReceiverNickname = receiver,
+                Date = $"{DateTime.Now:u}",
+                Msg = $"Вы {msg_temp.Date}: {msg_temp.Msg}"
+            };
             ShowInfo($"{sender} to  {receiver} : {msg_temp.Msg}");
 			
-			var response = new Response(sender, msg);
+			var response = new Response<Message>(msg, ResponseType.RequestAccepted);
             if(!server.SendMessageToClient(sender, response)){
 				return false;
 			}
 			
 			msg.Msg =  $"{sender} {msg_temp.Date}: {msg_temp.Msg}";
-			var response = new Response(sender, msg);
+			response = new Response<Message>(msg, ResponseType.RequestAccepted );
             if(!server.SendMessageToClient(receiver, response)){
 				return false;
 			}
