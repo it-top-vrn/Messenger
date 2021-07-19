@@ -28,13 +28,34 @@ namespace Server
                  var task = Task.Run(() => RequestHandler(server, ref newClient));
             }
         }
+		
+		//TODO перенести в отдельный класс ShowMeSomeShitAssInfo
+		static void ShowInfo (string message)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkBlue;
+            Console.WriteLine(message);
+            Console.ResetColor();
+        }
+		
+		static void ShowLog (string sender, string date, string message){
+			Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Клиент {sender} at {date}: {message}.");
+            Console.ResetColor();
+		}
+		
+		static void ShowMessage (string sender, string receiver, string date, string message){
+			Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"{sender} to {receiver} at {date}: {message}.");
+            Console.ResetColor();
+		}
 
 
-        static bool RequestHandler(TCPServer server, ref User newClient)
+		//TODO Тоже перенести в отдельный класс, HandleMeSomeShitAssRequests 
+        static bool RequestHandler(TCPServer server, ref User sender)
         {
             var db = new DB_api();
             db.Connect();
-            User sender = new User();
+            
             User receiver = new User();
             Request<string> request = new Request<string>();
             Request<User> userRequest = new Request<User>();
@@ -91,7 +112,7 @@ namespace Server
                         break;
 
                     case RequestType.Disconnect:
-                        ClientDisconnect(messageRequest.Data.SenderNickname, newClient, server);
+                        ClientDisconnect(sender.nickname, server);
                         flag = false;
                         break;
 
@@ -132,21 +153,21 @@ namespace Server
             }	
             return true;
         }
-
-
+		
         static bool Registration(TCPServer server, User newClient, ref DB_api db, LogToFile logger)
         {
             if (db.Registration(newClient.nickname, newClient.password))
             {
 				
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
-                // Журналирование
-				
+               // Журналирование
+				ShowLog(newClient.nickname, "Регистрация прошла успешно");
                 return true;
             }
             else
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
+				ShowLog(newClient.nickname, "Отказ регистрации. Никнейм уже занят, а может и еще какая-нибудь херня");
                 // Журналирование
                 return false;
             }
@@ -156,41 +177,26 @@ namespace Server
         {
             if (db.Authentication(newClient.nickname, newClient.password))
             {
-                server.SendMessageToClient(newClient.nickname, new Message
-                {
-                    Date = $"{DateTime.Now:u}",
-                    Msg = "Регистрация завершена успешно."
-
-                });
-                Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Успешная авторизация.");
-
-                //Журналирование успех
+                server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
+                // Журналирование
+				ShowLog(newClient.nickname, "Авторизация прошла успешно");
                 return true;
             }
             else
             {
-                server.SendMessageToClient(newClient.nickname, new Message
-                {
-                    Date = $"{DateTime.Now:u}",
-                    Msg = $"Отказ авторизации. Неправельный никнейм или пароль."
-                });
-                Console.WriteLine(
-                    $"Клиент {newClient.nickname} {DateTime.Now:u}: Отказ авторизации. Неправельный никнейм или пароль.");
+                server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
+				ShowLog(newClient.nickname, "Отказ авторизации. Неправельный никнейм или пароль");
                 // Журналирование
                 throw new ArgumentException();
                 return false;
             }
         }
         
-        //TODO исправить
-        static void ClientDisconnect(string sender, User client, TCPServer server)
+        static void ClientDisconnect(string sender, TCPServer server)
         {
-            server.ActiveClients.Remove(client.nickname);
-            var request = new Request<string> { 
-                Type = "5",
-                Data = "Выход из аккаунта"
-            };
-            server.SendMessageToClient(sender, request);
+            server.ActiveClients.Remove(sender);			
+			var response = new Response<string>{Type = ResponseType.RequestAccepted};
+            server.SendMessageToClient(sender, response);
             client.tcpclient.Close();
             Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Клиент отключился.");
             // Добаление записи в журнал
@@ -200,15 +206,15 @@ namespace Server
         static void DropTheChat(string sender, string receiver, DB_API db, TCPServer server)
         {
 
-            db.Drop(sender, receiver);
-            var msg = new Message
-            {
-                Date = $"{DateTime.Now:u}",
-                Msg = $"Беседа с {receiver} удалена."
-            };
-            server.SendMessageToClient(sender, msg);
-            Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Удаление беседы {sender}-{receiver}.");
-            // журналирование
+            if(db.Drop(sender, receiver)){
+				server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
+				Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Удаление беседы {sender}-{receiver}.");
+				// журналирование
+			} else {
+				server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
+				Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Ошибка при удалениие беседы {sender}-{receiver}.");
+				// журналирование
+			}
         }
 
         static List<Message> ReturnChat (string sender, string receiver, DB_API db)
@@ -251,27 +257,30 @@ namespace Server
             return contacts;
         }
 
-        static void MessageHandler(TCPServer server)
+        static bool MessageHandler(TCPServer server, Message msg_temp)
         {
-            while (true)
-            {
-                var msg_temp = JsonSerializer.Deserialize<Message>(server.GetMessage());
-                var sender_name = msg_temp.SenderNickname;
-                var receiver_name = msg_temp.ReceiverNickname;
-
-                ShowInfo($"{sender_name} to  {receiver_name} : {msg_temp.Msg}");
-                server.SendMessageToClient(sender_name, new Message
-                {
-                    Date = $"{DateTime.Now:u}",
-                    Msg = $"Вы {msg_temp.Date}: {msg_temp.Msg}"
-                });
-
-                server.SendMessageToClient(receiver_name, new Message
-                {
-                    Date = $"{DateTime.Now:u}",
-                    Msg = $"{sender_name} {msg_temp.Date}: {msg_temp.Msg}"
-                });
-            }
+            var sender = msg_temp.SenderNickname;
+            var receiver = msg_temp.ReceiverNickname;
+			var msg = new Message{
+				SenderNickname = sender,
+				ReceiverNickname = receiver,
+				Date = $"{DateTime.Now:u}",
+				Msg = $"Вы {msg_temp.Date}: {msg_temp.Msg}"
+			}
+            ShowInfo($"{sender} to  {receiver} : {msg_temp.Msg}");
+			
+			var response = new Response(sender, msg);
+            if(!server.SendMessageToClient(sender, response)){
+				return false;
+			}
+			
+			msg.Msg =  $"{sender} {msg_temp.Date}: {msg_temp.Msg}";
+			var response = new Response(sender, msg);
+            if(!server.SendMessageToClient(receiver, response)){
+				return false;
+			}
+			
+			return true;
         }
 
         static public List<string> GiveMeContactList(User client, TCPServer server, DB_api db)
@@ -280,13 +289,7 @@ namespace Server
            return db.GetContactList(client.nickname);
         }
 
-        static void ShowInfo (string message)
-        {
-            Console.ForegroundColor = ConsoleColor.DarkBlue;
-            Console.WriteLine(message);
-            Console.ResetColor();
-        }
-
+        
         static List<string> GiveMeMassegeList(string sender, string receiver, DB_api db)
         {
             var msgList = db.GetMsgList(sender, receiver);
