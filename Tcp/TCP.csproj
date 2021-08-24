@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Client\Client\Client.csproj" />
+    <ProjectReference Include="..\DB_API\DB_API.csproj" />
+    <ProjectReference Include="..\InfoLib\InfoLib.csproj" />
+    <ProjectReference Include="..\Logger\Logger.csproj" />
+    <ProjectReference Include="..\QueryLib\QueryLib.csproj" />
+  </ItemGroup>
+
+</Project>
