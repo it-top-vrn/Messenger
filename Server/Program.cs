@@ -25,8 +25,9 @@ namespace Server
                 };
                 newClient.tcpclient.SendMessage("1");
                 Console.WriteLine($"Клиент {newClient.nickname} {DateTime.Now:u}: Клиент подключился.");
-                
-                 var task = Task.Run(() => ServerLogic.RequestHandler(server, ref newClient));
+                var logger = new LogToFile();
+                logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Клиент {newClient.nickname} подключился.");
+                var task = Task.Run(() => ServerLogic.RequestHandler(server, ref newClient));
             }
         }
     }

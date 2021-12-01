@@ -12,16 +12,15 @@ namespace Server
 {
     class ServerLogic
     {
-        static public bool RequestHandler(TCPServer server, ref User sender)
+        static public void RequestHandler(TCPServer server, ref User sender)
         {
-            var db = new DB_api();
+            var db = new DBApi();
             db.Connect();
-
+            var logger = new LogToFile();
             User receiver = new User();
             Request<string> request = new Request<string>();
             Request<User> userRequest = new Request<User>();
             Request<Message> messageRequest = new Request<Message>();
-            var logger = new LogToFile();
             bool flag = true;
 
             while (flag)
@@ -60,7 +59,7 @@ namespace Server
                         else
                         {
                             flag = false;
-                            return false;
+                            return;
                         }
 
                         break;
@@ -69,12 +68,12 @@ namespace Server
                         if (!Authorization(server, userRequest.Data, ref db, logger))
                         {
                             flag = false;
-                            return false;
+                            return;
                         }
                         break;
 
                     case RequestType.Disconnect:
-                        ClientDisconnect(sender.nickname, sender.tcpclient, server);
+                        ClientDisconnect(sender.nickname, sender.tcpclient, server, logger);
                         flag = false;
                         break;
 
@@ -94,10 +93,9 @@ namespace Server
 
 
                     case RequestType.GiveMeContactList:
-                        //db_api.GetClients()
-                        List<User> contacts = new List<User>();
-                        var response_2 = new Response<List<User>>(contacts, ResponseType.RequestAccepted);
-                        server.SendMessageToClient(sender.nickname, response_2);
+                        var conts = GiveMeContactList(sender, server, db);
+                        var curResp = new Response<List<string>>(conts, ResponseType.RequestAccepted);
+                        server.SendMessageToClient(sender.nickname, curResp);
                         break;
 
                     case RequestType.AddNewContact:
@@ -116,74 +114,61 @@ namespace Server
             return true;
         }
 
-        static bool Registration(TCPServer server, User newClient, ref DB_api db, LogToFile logger)
+        static bool Registration(TCPServer server, User newClient, ref DBApi db, LogToFile logger)
         {
             var date = DateTime.Now.ToString();
             if (db.Registration(newClient.nickname, newClient.password))
             {
-
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
-                // Журналирование
                 Info.ShowLog(newClient.nickname, date, "Регистрация прошла успешно");
+                logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Регистрация прошла успешно");
                 return true;
             }
             else
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
                 Info.ShowLog(newClient.nickname, date, "Отказ регистрации. Никнейм уже занят, а может и еще какая-нибудь херня");
-                // Журналирование
+                logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Отказ регистрации. Никнейм уже занят, а может и еще какая-нибудь херня");
                 return false;
             }
         }
 
-        static bool Authorization(TCPServer server, User newClient, ref DB_api db, LogToFile logger)
+        static bool Authorization(TCPServer server, User newClient, ref DBApi db, LogToFile logger)
         {
             var date = DateTime.Now.ToString();
             if (db.Authentication(newClient.nickname, newClient.password))
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
-                // Журналирование
                 Info.ShowLog(newClient.nickname, date, "Авторизация прошла успешно");
+                logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Авторизация прошла успешно");
                 return true;
             }
             else
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
                 Info.ShowLog(newClient.nickname, date, "Отказ авторизации. Неправельный никнейм или пароль");
-                // Журналирование
-                throw new ArgumentException();
+                logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Отказ авторизации. Неправельный никнейм или пароль");
                 return false;
             }
         }
 
-        static void ClientDisconnect(string sender, TCPClient client, TCPServer server)
+        static void ClientDisconnect(string sender, TCPClient client, TCPServer server, LogToFile logger)
         {
             server.ActiveClients.Remove(sender);
             server.SendMessageToClient(sender, ResponseType.RequestAccepted);
             client.Close();
             Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Клиент отключился.");
-            // Добаление записи в журнал
+            logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Клиент {sender} отключился.");
         }
 
-        //TODO исправить
-        static void DropTheChat(string sender, string receiver, DB_API db, TCPServer server)
+        static void DropTheChat(string sender, string receiver, DBApi db, TCPServer server)
         {
-
-            if (db.Drop(sender, receiver))
-            {
-                server.SendMessageToClient(sender, ResponseType.RequestAccepted);
-                Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Удаление беседы {sender}-{receiver}.");
-                // журналирование
-            }
-            else
-            {
-                server.SendMessageToClient(sender, ResponseType.RequestDenied);
-                Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Ошибка при удалениие беседы {sender}-{receiver}.");
-                // журналирование
-            }
+            db.Drop(sender, receiver);
+            server.SendMessageToClient(sender, ResponseType.RequestAccepted);
+            Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Удаление беседы {sender}-{receiver}.");
         }
 
-        static List<Message> ReturnChat(string sender, string receiver, DB_API db)
+        static List<Message> ReturnChat(string sender, string receiver, DBApi db)
         {
             List<Message> chat = new List<Message>();
             var msgList = db.GetMsgList(sender, receiver);
@@ -194,33 +179,12 @@ namespace Server
                     SenderNickname = sender,
                     ReceiverNickname = receiver,
                     Date = $"{DateTime.Now:u}",
-                    Msg = msg
+                    Msg = msg.Value
                 };
 
                 chat.Add(msgObject);
             }
             return chat;
-        }
-
-        static List<User> ReturnContacs(string sender, DB_API db)
-        {
-            //Убрать лишнее
-            List<User> clientList = db.GetClientList(); // нужен метод возвращающий лист клиентов из БД
-            List<string> contactList = db.GetContactList(sender);
-            List<User> contacts = new List<User>();
-
-            foreach (var nickname in contactList)
-            {
-                foreach (var client in clientList)
-                {
-                    if (client.nickname == nickname)
-                    {
-                        contacts.Add(client);
-                    }
-                }
-            }
-
-            return contacts;
         }
 
         static bool MessageHandler(TCPServer server, Message msg_temp)
@@ -248,18 +212,25 @@ namespace Server
             {
                 return false;
             }
-
             return true;
         }
 
-        static public List<string> GiveMeContactList(User client, TCPServer server, DB_api db)
+        static public List<string> GiveMeContactList(User client, TCPServer server, DBApi db)
         {
-            //Журналирование 
-            return db.GetContactList(client.nickname);
+            return db.GetContactsList(client.nickname);
         }
 
+        static public void AddNewContact(string sender, string newContact, DB_API db)
+        {
+            db.InsertContact(sender, newContact);
+        }
 
-        static List<string> GiveMeMassegeList(string sender, string receiver, DB_api db)
+        static public void DeleteContact(string sender, string contact, DB_API db)
+        {
+            db.DeleteContact(sender, contact);
+        }
+
+        static List<Message> GiveMeMassegeList(string sender, string receiver, DBApi db)
         {
             var msgList = db.GetMsgList(sender, receiver);
             var list = new List<Message>();
@@ -271,12 +242,11 @@ namespace Server
                         Date = $"{DateTime.Now:u}",
                         ReceiverNickname = receiver,
                         SenderNickname = sender,
-                        Msg = msg
+                        Msg = msg.Value
                     }
                 );
             }
-
-            return db.GetMsgList(sender, receiver);
+            return list;
         }
 
         static string MessageTypeMessage(string message)
