@@ -23,6 +23,33 @@ namespace Server
             Request<Message> messageRequest = new Request<Message>();
             bool flag = true;
 
+            userRequest = JsonSerializer.Deserialize<Request<User>>(server.GetMessage());
+            switch (userRequest.Type)
+            {
+                case RequestType.Registration:
+                    if (Registration(server, userRequest.Data, ref db, logger))
+                    {
+                        sender.nickname = userRequest.Data.nickname;
+                        sender.password = userRequest.Data.password;
+                    }
+                    else
+                    {
+                        flag = false;
+                        return;
+                    }
+
+                    break;
+
+                case RequestType.Authorization:
+                    if (!Authorization(server, userRequest.Data, ref db, logger))
+                    {
+                        flag = false;
+                        return;
+                    }
+                    break;
+            }
+
+
             while (flag)
             {
                 try
@@ -37,14 +64,7 @@ namespace Server
                     }
                     catch (JsonException)
                     {
-                        try
-                        {
-                            userRequest = JsonSerializer.Deserialize<Request<User>>(server.GetMessage());
-                        }
-                        catch (JsonException)
-                        {
-                            return;
-                        }
+                        return;
                     }
                 }
 
