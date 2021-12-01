@@ -30,7 +30,6 @@ namespace Client
             User user1 = new User();
 
             user1.nickName = entry_name.Text;
-            user1.idUser = entry_id.Text;
 
             user.contacts.Add(user1);
         }
