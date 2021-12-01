@@ -8,7 +8,6 @@ namespace Client
     {
        public string nickName;
        public string password;
-       public string idUser;
        public string role;
 
        public List<Dialog> dialogs;
