@@ -17,7 +17,6 @@ namespace Server
             var db = new DBApi();
             db.Connect();
             var logger = new LogToFile();
-            User receiver = new User();
             Request<string> request = new Request<string>();
             Request<User> userRequest = new Request<User>();
             Request<Message> messageRequest = new Request<Message>();
@@ -98,7 +97,7 @@ namespace Server
                         break;
 
                     case RequestType.Message:
-                        MessageHandler(server, messageRequest.Data);
+                        MessageHandler(server, messageRequest.Data, logger);
                         break;
 
                     case RequestType.DropTheChat:
@@ -110,7 +109,6 @@ namespace Server
                         var response = new Response<List<Message>>(chat, ResponseType.RequestAccepted);
                         server.SendMessageToClient(sender.nickname, response);
                         break;
-
 
                     case RequestType.GiveMeContactList:
                         var conts = GiveMeContactList(sender, server, db);
@@ -176,7 +174,7 @@ namespace Server
             server.ActiveClients.Remove(sender);
             server.SendMessageToClient(sender, ResponseType.RequestAccepted);
             client.Close();
-            Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Клиент отключился.");
+            Info.ShowLog(sender, DateTime.UtcNow.ToString("u"), "Клиент отключился.");
             logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Клиент {sender} отключился.");
         }
 
@@ -184,7 +182,6 @@ namespace Server
         {
             db.Drop(sender, receiver);
             server.SendMessageToClient(sender, ResponseType.RequestAccepted);
-            Console.WriteLine($"Клиент {sender} {DateTime.Now:u}: Удаление беседы {sender}-{receiver}.");
         }
 
         static List<Message> ReturnChat(string sender, string receiver, DBApi db)
@@ -206,7 +203,7 @@ namespace Server
             return chat;
         }
 
-        static bool MessageHandler(TCPServer server, Message msg_temp)
+        static void MessageHandler(TCPServer server, Message msg_temp, LogToFile logger)
         {
             var sender = msg_temp.SenderNickname;
             var receiver = msg_temp.ReceiverNickname;
@@ -222,16 +219,19 @@ namespace Server
             var response = new Response<Message>(msg, ResponseType.RequestAccepted);
             if (!server.SendMessageToClient(sender, response))
             {
-                return false;
+                Info.ShowLog(sender, DateTime.UtcNow.ToString("u"), $"Передача ответа потерпела фиаско.");
+                logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Передача ответа клиенту {sender} потерпела фиаско.");
+                
             }
 
             msg.Msg = $"{sender} {msg_temp.Date}: {msg_temp.Msg}";
             response = new Response<Message>(msg, ResponseType.RequestAccepted);
             if (!server.SendMessageToClient(receiver, response))
             {
-                return false;
+                Info.ShowLog(receiver, DateTime.UtcNow.ToString("u"), $"Передача ответа потерпела фиаско.");
+                logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Передача ответа клиенту {receiver} потерпела фиаско.");
             }
-            return true;
+            
         }
 
         static public List<string> GiveMeContactList(User client, TCPServer server, DBApi db)
@@ -266,16 +266,6 @@ namespace Server
                 );
             }
             return list;
-        }
-
-        static string MessageTypeMessage(string message)
-        {
-            var msg = new Message
-            {
-                //Данные класса
-            };
-            var msg_send = JsonSerializer.Serialize(msg);
-            return msg_send;
         }
     }
 }
