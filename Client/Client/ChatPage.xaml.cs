@@ -35,11 +35,9 @@ namespace Client
 
         private void Send_button_Clicked(object sender, EventArgs e)
         {
-            Chat_StackLayout.Children.Add(new Frame { CornerRadius = 30, BindingContext = Entry_chat.Text, BackgroundColor = Color.LightGreen });
-
-
-            //    Chat_StackLayout.Children.Add(new Label { Text = Entry_chat.Text, BackgroundColor = Color.LightGreen });
-
+            Chat_StackLayout.Children.Add(new Label { Text = Entry_chat.Text, BackgroundColor = Color.LightGreen });
+            
+            //Chat_StackLayout.Children.Add(new Frame { CornerRadius = 30, BindingContext = Entry_chat.Text, BackgroundColor = Color.LightGreen });
         }
 
         private async void settings_button_Clicked(object sender, EventArgs e)
