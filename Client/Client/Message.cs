@@ -8,8 +8,8 @@ namespace Client
     {
         string dateOfSending;
         string idDialog;
-        string idOfSender;
-        string idOfResipient;
+        string nameOfSender;
+        string nameOfResipient;
         string data;
     }
 }
