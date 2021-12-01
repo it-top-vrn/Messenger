@@ -43,7 +43,7 @@ namespace Server
                         }
                         catch (JsonException)
                         {
-                            return false;
+                            return;
                         }
                     }
                 }
@@ -99,19 +99,18 @@ namespace Server
                         break;
 
                     case RequestType.AddNewContact:
-                        //Add new Contact
-
+                        AddNewContact(sender, request.Data, db);
                         break;
 
                     case RequestType.DeleteTheContact:
-                        //delete contact
+                        DeleteContact(sender, request.Data, db);
                         break;
 
                     default:
-                        return true;
+                        return;
                 }
             }
-            return true;
+            return;
         }
 
         static bool Registration(TCPServer server, User newClient, ref DBApi db, LogToFile logger)
