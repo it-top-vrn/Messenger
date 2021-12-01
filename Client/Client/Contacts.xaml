@@ -31,10 +31,9 @@
         <Button x:Name="butoon_newContact" HeightRequest="30" Text="Добавить новый контакт" Clicked="butoon_newContact_Clicked"></Button>
         <Frame BackgroundColor="LightGray" BorderColor="DarkGray">
             <StackLayout Orientation="Horizontal">
-                <Button x:Name="contacts_button" HorizontalOptions="StartAndExpand"  Text ="Контакты"  ></Button>
+                <Button x:Name="contacts_button" HorizontalOptions="StartAndExpand"  Text ="Контакты" ></Button>
                 <Button x:Name="status_button" HorizontalOptions="CenterAndExpand"  Text ="Список чатов" Clicked="status_button_Clicked"  ></Button>
-                <Button x:Name="chats_button" HorizontalOptions="CenterAndExpand" Text ="Текущий чат" Clicked="chats_button_Clicked"
-                        ></Button>
+                <Button x:Name="chat_button" HorizontalOptions="CenterAndExpand" Text ="Текущий чат" Clicked="chat_button_Clicked"></Button>
                 <Button x:Name="settings_button" HorizontalOptions="EndAndExpand" Text="Настройки" Clicked="settings_button_Clicked" ></Button>
             </StackLayout>
         </Frame>

@@ -13,27 +13,22 @@ namespace Client
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class ChatPage : ContentPage
     {
-        public List<Chat> Chat1 { get; set; }
-
         public ObservableCollection<string> Items { get; set; }
 
-        public ChatPage()
+        User user = new User();
+        public ChatPage(User _user)
         {
 
             InitializeComponent();
+            user = _user;
 
-            Chat1 = new List<Chat>
-            {
-                new Chat {name = "Max", message = "" },
-          };
+            //запрос на загрузку сообщений диалога
 
         }
 
-
-
         private async void status_button_Clicked(object sender, EventArgs e)
         {
-            var Page1 = new MainPage();
+            var Page1 = new ChatList(user);
 
             await Navigation.PushAsync(Page1);
         }
@@ -45,21 +40,18 @@ namespace Client
 
             //    Chat_StackLayout.Children.Add(new Label { Text = Entry_chat.Text, BackgroundColor = Color.LightGreen });
 
-
-
-
         }
 
         private async void settings_button_Clicked(object sender, EventArgs e)
         {
-            var setPage = new Settings();
+            var setPage = new Settings(user);
 
             await Navigation.PushAsync(setPage);
         }
 
         private async void contacts_button_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new Contacts();
+            var secondPage = new Contacts(user);
 
             await Navigation.PushAsync(secondPage);
         }

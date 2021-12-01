@@ -10,39 +10,45 @@ namespace Client
 {
     public partial class MainPage : ContentPage
     {
+        User user = new User();
         public MainPage()
         {
             InitializeComponent();
+
         }
 
-        private async void chats_button_Clicked(object sender, EventArgs e)
+        private async void button_registration_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChatPage();
+            var mainPage = new Registration(user);
 
-            await Navigation.PushAsync(secondPage);
+            await Navigation.PushAsync(mainPage);
         }
 
-        private async void ListView_Focused(object sender, FocusEventArgs e)
+        private async void button_login_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChatPage();
+            if (entry_login.Text != "" && entry_password.Text != "")
+            {
+                user.nickName = entry_login.Text;
+                user.password = entry_password.Text;
 
-            await Navigation.PushAsync(secondPage);
+                //получение ответа для аутентификации if( ... )
+
+                //загрузка айдишника и роли
+
+                var secondPage = new Contacts(user);
+
+                _ = DisplayAlert("Авторизация", "Успешно!", "Ok");
+
+                await Navigation.PushAsync(secondPage);
+            }
+            else _ = DisplayAlert("Ошибка", "Неверный логин или пароль.", "Ok");
+
         }
+    }
 
-        private async void settings_button_Clicked(object sender, EventArgs e)
-        {
-            var setPage = new Settings();
-
-            await Navigation.PushAsync(setPage);
-        }
-
-        private async void contacts_button_Clicked(object sender, EventArgs e)
-        {
-            var contactPage = new Contacts();
-
-            await Navigation.PushAsync(contactPage);
-        }
-    
+    // надо прописать запросы на загрузку xml доков со списками контактов, диалогов, сообщений
+    // чтобы не все вместе загружалось, а что-то конкретное, в зависимости от того, что нажмет пользователь
+    // и при изменении содержимого отправлять запрос, чтобы эти изменения вносились и в БД также
 
 }
-}
+

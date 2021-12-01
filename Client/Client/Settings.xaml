@@ -3,19 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Client.Settings">
     <StackLayout>
-        <Label Text="Настройки"
-                VerticalOptions="CenterAndExpand" 
-                HorizontalOptions="CenterAndExpand" />
+        <Frame BackgroundColor="#2196F3"  Padding="16" HeightRequest="20" CornerRadius="30">
+            <Label Text="Настройки"  HorizontalTextAlignment="Center"  TextColor="White" FontSize="16" FontAttributes="Bold"/>
+        </Frame>
+        <Label x:Name="label_login" Text="Имя:"></Label>
+        <Label x:Name="label_id" Text="ID:" ></Label>
+        <Label x:Name="label_role" Text="статус:" ></Label>
 
-
-
-
-        <Label x:Name="label_login" Text="Введите логин"></Label>
-        <Entry x:Name="entry_login"></Entry>
-        <Label x:Name="label_password" Text="Введите пароль" ></Label>
-        <Entry x:Name="entry_password" IsPassword="True"></Entry>
-        <Button x:Name="button_login" Text="Войти" HeightRequest="30" ></Button>
-        <Button x:Name="button_registration" Text="Зарегистрироваться" Clicked="button_registration_Clicked" HeightRequest="30"></Button>
+        <Button x:Name="button_changeName" Text="Изменить имя" HeightRequest="30"></Button>
+        <Button x:Name="button_changePassword" Text="Изменить пароль" HeightRequest="30" Clicked="button_changePassword_Clicked"></Button>
+        <Button x:Name="button_exit" Text="Выйти из аккаунта" HeightRequest="30" Clicked="button_exit_Clicked"></Button>
 
 
         <Frame BackgroundColor="LightGray" BorderColor="DarkGray"  VerticalOptions="EndAndExpand">
@@ -23,7 +20,7 @@
             <StackLayout Orientation="Horizontal">
                 <Button x:Name="contacts_button" HorizontalOptions="StartAndExpand"  Text ="Контакты" Clicked="contacts_button_Clicked"  ></Button>
                 <Button x:Name="status_button" HorizontalOptions="CenterAndExpand"  Text ="Список чатов" Clicked="status_button_Clicked" ></Button>
-                <Button x:Name="chats_button" HorizontalOptions="CenterAndExpand" Text ="Текущий чат" Clicked="chats_button_Clicked_1"></Button>
+                <Button x:Name="chat_button" HorizontalOptions="CenterAndExpand" Text ="Текущий чат" Clicked="chat_button_Clicked"></Button>
                 <Button x:Name="settings_button" HorizontalOptions="EndAndExpand" Text="Настройки"></Button>
             </StackLayout>
         </Frame>

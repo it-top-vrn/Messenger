@@ -3,17 +3,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Client.ChatPage">
     <StackLayout>
-
-        <ScrollView >
-            <StackLayout x:Name="Chat_StackLayout">
-                <BoxView x:Name="Chat_boxviev" CornerRadius="30" >
-
-
-                </BoxView>
-
-            </StackLayout>
-        </ScrollView>
-
+        <Frame BackgroundColor="#2196F3"  Padding="16" HeightRequest="20" CornerRadius="30">
+            <Label Text="Текущий чат"  HorizontalTextAlignment="Center"  TextColor="White" FontSize="16" FontAttributes="Bold"/>
+        </Frame>
+        <Frame BorderColor="Gray">
+            <ScrollView >
+                <StackLayout x:Name="Chat_StackLayout">
+                    <BoxView x:Name="Chat_boxviev" CornerRadius="30" >
+                    </BoxView>
+                </StackLayout>
+            </ScrollView>
+        </Frame>
+        
 
         <Frame BorderColor="Blue"  VerticalOptions="EndAndExpand">
             <StackLayout  VerticalOptions="EndAndExpand">
@@ -26,7 +27,7 @@
             <StackLayout Orientation="Horizontal" VerticalOptions="EndAndExpand" >
                 <Button x:Name="contacts_button" HorizontalOptions="StartAndExpand"  Text ="Контакты" Clicked="contacts_button_Clicked" ></Button>
                 <Button x:Name="status_button" HorizontalOptions="CenterAndExpand"  Text ="Список чатов" Clicked="status_button_Clicked"></Button>
-                <Button x:Name="chats_button" HorizontalOptions="CenterAndExpand" Text ="Текущий чат"></Button>
+                <Button x:Name="chat_button" HorizontalOptions="CenterAndExpand" Text ="Текущий чат"></Button>
                 <Button x:Name="settings_button" HorizontalOptions="EndAndExpand" Text="Настройки" Clicked="settings_button_Clicked"></Button>
             </StackLayout>
         </Frame>

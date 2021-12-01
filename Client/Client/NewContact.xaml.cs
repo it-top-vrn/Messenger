@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -12,36 +11,28 @@ namespace Client
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class NewContact : ContentPage
     {
-        public NewContact()
+        User user = new User();
+        public NewContact(User _user)
         {
             InitializeComponent();
+            user = _user;
         }
-        private async void contacts_button_Clicked(object sender, EventArgs e)
+      
+        private async void butoon_cancel_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new Contacts();
+            var secondPage = new Contacts(user);
 
             await Navigation.PushAsync(secondPage);
         }
 
-        private async void status_button_Clicked(object sender, EventArgs e)
+        private void butoon_ADDContact_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChatPage();
+            User user1 = new User();
 
-            await Navigation.PushAsync(secondPage);
-        }
+            user1.nickName = entry_name.Text;
+            user1.idUser = entry_id.Text;
 
-        private async void chats_button_Clicked(object sender, EventArgs e)
-        {
-            var secondPage = new MainPage();
-
-            await Navigation.PushAsync(secondPage);
-        }
-
-        private async void settings_button_Clicked(object sender, EventArgs e)
-        {
-            var secondPage = new Settings();
-
-            await Navigation.PushAsync(secondPage);
+            user.contacts.Add(user1);
         }
     }
 }
