@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Client
 {
-    class Message
+    public class Message
     {
         string dateOfSending { get; set; }
         string idDialog { get; set; }

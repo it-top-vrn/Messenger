@@ -8,8 +8,8 @@ namespace Client
 {
     public enum RequestType
     {
-        Registration, Authorization, Disconnect, Message, AddNewContact, DeleteTheContact, DropTheChat, GiveMeContactList, GiveMeMessageList, 
-        ChangePassword, ChangeNickName
+        Registration, Authorization, Disconnect, Message, AddNewContact, DeleteTheContact, DropTheChat,
+        GiveMeContactList, GiveMeChatList, GiveMeMessageList, ChangePassword, ChangeNickName
     }
     
     public enum ResponseType

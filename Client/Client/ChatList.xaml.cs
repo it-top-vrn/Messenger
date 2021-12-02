@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,19 +20,42 @@ namespace Client
             user = _user;
             tcpClient = _tcpClient;
 
-            //запрос на загрузку списка диалогов
+            QueryLib<string> req = new QueryLib<string>(user.nickName, RequestType.GiveMeChatList);
+            string msg = JsonConvert.SerializeObject(req);
+
+            tcpClient.SendMessage(msg);
+
+            string msg1 = tcpClient.GetMessage();
+            QueryLib<string> resp = new QueryLib<string>(JsonConvert.DeserializeObject<QueryLib<string>>(msg1));
+
+            if (resp.rsType == ResponseType.RequestDenied)
+            {
+                _ = DisplayAlert("Ошибка", "Отказано.", "Ok");
+            }
+            else user.Dialogs = JsonConvert.DeserializeObject<User>(resp.Data).Dialogs;
+
+            foreach (var entry in user.Dialogs)
+            {
+                var contact = entry.idDialog; // содержимое (доделать)
+            }
         }
 
         private async void chat_button_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChatPage(user, tcpClient);
+            string idDialog = "unfinded";
+            //idDialog = label_idDialog;
+
+            var secondPage = new ChatPage(user, tcpClient, idDialog);
 
             await Navigation.PushAsync(secondPage);
         }
 
         private async void ListView_Focused(object sender, FocusEventArgs e)
         {
-            var secondPage = new ChatPage(user, tcpClient);
+            string idDialog = "unfinded";
+            //idDialog = label_idDialog;
+
+            var secondPage = new ChatPage(user, tcpClient, idDialog);
 
             await Navigation.PushAsync(secondPage);
         }

@@ -21,7 +21,7 @@ namespace Client
             user = _user;
             tcpClient = _tcpClient;
 
-            QueryLib<string> req = new QueryLib<string>(JsonConvert.SerializeObject(user), RequestType.GiveMeContactList);
+            QueryLib<string> req = new QueryLib<string>(user.nickName, RequestType.GiveMeContactList);
             string msg = JsonConvert.SerializeObject(req);
 
             tcpClient.SendMessage(msg);
@@ -32,11 +32,11 @@ namespace Client
             {
                 _ = DisplayAlert("Ошибка", "Отказано.", "Ok");
             }
-            else user = JsonConvert.DeserializeObject<User>(resp.Data);
+            else user.Contacts = JsonConvert.DeserializeObject<User>(resp.Data).Contacts;
 
-             foreach (var entry in user.Contacts)
+            foreach (var entry in user.Contacts)
              {
-                 var contact = entry.nickName; // содержимое
+                 var contact = entry.nickName; // содержимое доделать, вывод имен и айдишников диалогов
              }
         }
 
@@ -45,14 +45,12 @@ namespace Client
             var secondPage = new ChatList(user, tcpClient);
 
             await Navigation.PushAsync(secondPage);
-
-            //запрос на загрузку списка контактов
         }
 
 
         private async void chat_button_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChatPage(user, tcpClient);
+            var secondPage = new ChatPage(user, tcpClient, user.idDialog);
 
             await Navigation.PushAsync(secondPage);
         }

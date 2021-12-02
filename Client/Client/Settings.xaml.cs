@@ -38,7 +38,7 @@ namespace Client
 
         private async void chat_button_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChatPage(user, tcpClient);
+            var secondPage = new ChatPage(user, tcpClient, user.idDialog);
 
             await Navigation.PushAsync(secondPage);
         }

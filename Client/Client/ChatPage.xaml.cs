@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -16,14 +17,34 @@ namespace Client
 
         User user = new User();
         TCPClient tcpClient = new TCPClient();
-        public ChatPage(User _user, TCPClient _tcpClient)
+        public ChatPage(User _user, TCPClient _tcpClient, string _idDialog)
         {
 
             InitializeComponent();
             user = _user;
             tcpClient = _tcpClient;
+            user.idDialog = _idDialog;
 
-            //запрос на загрузку сообщений диалога
+            var temp = new Dialog();
+
+            QueryLib<string> req = new QueryLib<string>(user.idDialog, RequestType.GiveMeMessageList);
+            string msg = JsonConvert.SerializeObject(req);
+
+            tcpClient.SendMessage(msg);
+
+            string msg1 = tcpClient.GetMessage();
+            QueryLib<string> resp = new QueryLib<string>(JsonConvert.DeserializeObject<QueryLib<string>>(msg1));
+
+            if (resp.rsType == ResponseType.RequestDenied)
+            {
+                _ = DisplayAlert("Ошибка", "Отказано.", "Ok");
+            }
+            else temp.Messages = JsonConvert.DeserializeObject<Dialog>(resp.Data).Messages;
+
+            foreach (var entry in user.Dialogs)
+            {
+                var contact = entry.idDialog; // содержимое (доделать)
+            }
 
         }
 

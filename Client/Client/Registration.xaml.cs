@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,12 +12,10 @@ namespace Client
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class Registration : ContentPage
     {
-        User user = new User();
         TCPClient tcpClient = new TCPClient();
-        public Registration(User _user, TCPClient _tcpClient)
+        public Registration(TCPClient _tcpClient)
         {
             InitializeComponent();
-            user = _user;
             tcpClient = _tcpClient;
         }
 
@@ -29,7 +28,7 @@ namespace Client
 
         private async void button_registration_Clicked(object sender, EventArgs e)
         {
-            string login = entry_login.Text;
+            string _nickName = entry_login.Text;
             string pass1 = entry_password.Text;
             string pass2 = entry_password2.Text;
 
@@ -37,15 +36,26 @@ namespace Client
             {
                 _ = DisplayAlert("Ошибка", "Проверьте ввод паролей", "Ok");
             }
-            else if (login.Length == 0)
+            else if (_nickName.Length == 0)
             {
                 _ = DisplayAlert("Ошибка", "Введите данные, используя цифры и латинские бурвы", "Ok");
             }
             else
             {
-                user.nickName = login;
-                user.password = pass1;
-                //запрос на получение id и роли
+                var user = new User { nickName = entry_login.Text, password = entry_password.Text };
+
+                QueryLib<User> req = new QueryLib<User>(user, RequestType.Registration);
+                string msg = JsonConvert.SerializeObject(req);
+
+                tcpClient.SendMessage(msg);
+
+                string msg1 = tcpClient.GetMessage();
+                QueryLib<string> resp = JsonConvert.DeserializeObject<QueryLib<string>>(msg1);
+                if (resp.rsType == ResponseType.RequestDenied)
+                {
+                    _ = DisplayAlert("Ошибка", "Отказано.", "Ok");
+                }
+                else user = JsonConvert.DeserializeObject<User>(resp.Data);
 
                 var secondPage = new Contacts(user, tcpClient);
 

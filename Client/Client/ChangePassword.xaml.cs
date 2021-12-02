@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -36,12 +35,17 @@ namespace Client
                 }
                 else
                 {
-                    user.password = pass1;
-
-                    QueryLib<string> req = new QueryLib<string>(JsonConvert.SerializeObject(user), RequestType.ChangePassword);
+                    QueryLib<string> req = new QueryLib<string>(pass1, RequestType.ChangePassword);
                     string msg = JsonConvert.SerializeObject(req);
 
                     tcpClient.SendMessage(msg);
+
+                    string msg1 = tcpClient.GetMessage();
+                    QueryLib<string> resp = JsonConvert.DeserializeObject<QueryLib<string>>(msg1);
+                    if (resp.rsType == ResponseType.RequestDenied)
+                    {
+                        _ = DisplayAlert("Ошибка", "Отказано.", "Ok");
+                    } else user.password = pass1;
 
                     var secondPage = new Contacts(user, tcpClient);
 
@@ -56,9 +60,11 @@ namespace Client
             }
         }
 
-        private void button_changeCancel_Clicked(object sender, EventArgs e)
+        private async void button_changeCancel_Clicked(object sender, EventArgs e)
         {
+            var secondPage = new Settings(user, tcpClient);
 
+            await Navigation.PushAsync(secondPage);
         }
     }
 }

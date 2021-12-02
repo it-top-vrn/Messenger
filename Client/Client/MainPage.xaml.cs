@@ -7,7 +7,6 @@ namespace Client
 {
     public partial class MainPage : ContentPage
     {
-        User user = new User();
         TCPClient tcpClient = new TCPClient();
 
         public MainPage()
@@ -19,7 +18,7 @@ namespace Client
 
         private async void button_registration_Clicked(object sender, EventArgs e)
         {
-            var mainPage = new Registration(user, tcpClient);
+            var mainPage = new Registration(tcpClient);
 
             await Navigation.PushAsync(mainPage);
         }
@@ -28,16 +27,13 @@ namespace Client
         {
             if (entry_login.Text != "" && entry_password.Text != "")
             {
-                string _nickName = entry_login.Text;
-                string _password = entry_password.Text;
 
-                user = new User { nickName = _nickName, password = _password };
+                var user = new User { nickName = entry_login.Text, password = entry_password.Text };
 
-                QueryLib<string> req = new QueryLib<string>(JsonConvert.SerializeObject(user), RequestType.Authorization);
+                QueryLib<User> req = new QueryLib<User>(user, RequestType.Authorization);
                 string msg = JsonConvert.SerializeObject(req);
 
                 tcpClient.SendMessage(msg);
-
 
                 string msg1 = tcpClient.GetMessage();
                 QueryLib<string> resp = JsonConvert.DeserializeObject<QueryLib<string>>(msg1);
