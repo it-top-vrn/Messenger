@@ -6,7 +6,7 @@ namespace Client
 {
     public class Dialog
     {
-        string idDialog;
-        string dateOfSendingLastMessage;
+        public string idDialog { get; set; }
+        public string dateOfSendingLastMessage { get; set; }
     }
 }

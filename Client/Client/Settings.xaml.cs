@@ -12,31 +12,33 @@ namespace Client
     public partial class Settings : ContentPage
     {
         User user = new User();
-        public Settings(User _user)
+        TCPClient tcpClient = new TCPClient();
+        public Settings(User _user, TCPClient _tcpClient)
         {
             InitializeComponent();
             user = _user;
+            tcpClient = _tcpClient;
 
-            label_login.Text +=  " " + user.nickName;
-            label_id.Text +=  " " + user.password;
+            label_login.Text += " " + user.nickName;
+            label_role.Text += " " + user.role;
         }
         private async void contacts_button_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new Contacts(user);
+            var secondPage = new Contacts(user, tcpClient);
 
             await Navigation.PushAsync(secondPage);
         }
 
         private async void status_button_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChatList(user);
+            var secondPage = new ChatList(user, tcpClient);
 
             await Navigation.PushAsync(secondPage);
         }
 
         private async void chat_button_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChatPage(user);
+            var secondPage = new ChatPage(user, tcpClient);
 
             await Navigation.PushAsync(secondPage);
         }
@@ -49,7 +51,7 @@ namespace Client
 
         private async void button_changePassword_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new ChangePassword(user);
+            var secondPage = new ChangePassword(user, tcpClient);
 
             await Navigation.PushAsync(secondPage);
         }

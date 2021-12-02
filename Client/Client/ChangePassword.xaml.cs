@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,10 +14,12 @@ namespace Client
     public partial class ChangePassword : ContentPage
     {
         User user = new User();
-        public ChangePassword(User _user)
+        TCPClient tcpClient = new TCPClient();
+        public ChangePassword(User _user, TCPClient _tcpClient)
         {
             InitializeComponent();
             user = _user;
+            tcpClient = _tcpClient;
         }
 
         private async void button_changePassword_Clicked(object sender, EventArgs e)
@@ -25,7 +28,7 @@ namespace Client
             string pass1 = entry_newPass.Text;
             string pass2 = entry_newPass2.Text;
 
-            if (oldPass != "") //отправить запрос на аутентификацию
+            if (oldPass == user.password)
             {
                 if (pass1 != pass2)
                 {
@@ -35,9 +38,12 @@ namespace Client
                 {
                     user.password = pass1;
 
-                    //отправить запрос на смену пароля
+                    QueryLib<string> req = new QueryLib<string>(JsonConvert.SerializeObject(user), RequestType.ChangePassword);
+                    string msg = JsonConvert.SerializeObject(req);
 
-                    var secondPage = new Contacts(user);
+                    tcpClient.SendMessage(msg);
+
+                    var secondPage = new Contacts(user, tcpClient);
 
                     _ = DisplayAlert("Смена пароля", "Успешно!", "Ok");
 

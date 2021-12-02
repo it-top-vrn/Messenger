@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -16,11 +15,13 @@ namespace Client
         public ObservableCollection<string> Items { get; set; }
 
         User user = new User();
-        public ChatPage(User _user)
+        TCPClient tcpClient = new TCPClient();
+        public ChatPage(User _user, TCPClient _tcpClient)
         {
 
             InitializeComponent();
             user = _user;
+            tcpClient = _tcpClient;
 
             //запрос на загрузку сообщений диалога
 
@@ -28,7 +29,7 @@ namespace Client
 
         private async void status_button_Clicked(object sender, EventArgs e)
         {
-            var Page1 = new ChatList(user);
+            var Page1 = new ChatList(user, tcpClient);
 
             await Navigation.PushAsync(Page1);
         }
@@ -42,14 +43,14 @@ namespace Client
 
         private async void settings_button_Clicked(object sender, EventArgs e)
         {
-            var setPage = new Settings(user);
+            var setPage = new Settings(user, tcpClient);
 
             await Navigation.PushAsync(setPage);
         }
 
         private async void contacts_button_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new Contacts(user);
+            var secondPage = new Contacts(user, tcpClient);
 
             await Navigation.PushAsync(secondPage);
         }

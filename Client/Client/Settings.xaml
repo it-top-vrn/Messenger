@@ -7,7 +7,6 @@
             <Label Text="Настройки"  HorizontalTextAlignment="Center"  TextColor="White" FontSize="16" FontAttributes="Bold"/>
         </Frame>
         <Label x:Name="label_login" Text="Имя:"></Label>
-        <Label x:Name="label_id" Text="ID:" ></Label>
         <Label x:Name="label_role" Text="статус:" ></Label>
 
         <Button x:Name="button_changeName" Text="Изменить имя" HeightRequest="30"></Button>

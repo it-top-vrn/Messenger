@@ -12,10 +12,12 @@ namespace Client
     public partial class Registration : ContentPage
     {
         User user = new User();
-        public Registration(User _user)
+        TCPClient tcpClient = new TCPClient();
+        public Registration(User _user, TCPClient _tcpClient)
         {
             InitializeComponent();
             user = _user;
+            tcpClient = _tcpClient;
         }
 
         private async void button_registrationCancel_Clicked(object sender, EventArgs e)
@@ -45,7 +47,7 @@ namespace Client
                 user.password = pass1;
                 //запрос на получение id и роли
 
-                var secondPage = new Contacts(user);
+                var secondPage = new Contacts(user, tcpClient);
 
                 _ = DisplayAlert("Регистрация", "Успешно!", "Ok");
 

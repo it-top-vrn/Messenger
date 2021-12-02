@@ -12,15 +12,17 @@ namespace Client
     public partial class NewContact : ContentPage
     {
         User user = new User();
-        public NewContact(User _user)
+        TCPClient tcpClient = new TCPClient();
+        public NewContact(User _user, TCPClient _tcpClient)
         {
             InitializeComponent();
             user = _user;
+            tcpClient = _tcpClient;
         }
       
         private async void butoon_cancel_Clicked(object sender, EventArgs e)
         {
-            var secondPage = new Contacts(user);
+            var secondPage = new Contacts(user, tcpClient);
 
             await Navigation.PushAsync(secondPage);
         }
@@ -31,7 +33,7 @@ namespace Client
 
             user1.nickName = entry_name.Text;
 
-            user.contacts.Add(user1);
+            //user.Add(user1);
         }
     }
 }

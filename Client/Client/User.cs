@@ -6,11 +6,11 @@ namespace Client
 {
     public class User
     {
-       public string nickName;
-       public string password;
-       public string role;
+       public string nickName { get; set; }
+       public string password { get; set; }
+       public string role { get; set; }
 
-       public List<Dialog> dialogs;
-       public List<User> contacts;
+        public List<User> Contacts { get; set; }
+        public List<User> Dialogs { get; set; }
     }
 }

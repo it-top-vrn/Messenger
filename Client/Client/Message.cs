@@ -6,10 +6,10 @@ namespace Client
 {
     class Message
     {
-        string dateOfSending;
-        string idDialog;
-        string nameOfSender;
-        string nameOfResipient;
-        string data;
+        string dateOfSending { get; set; }
+        string idDialog { get; set; }
+        string nameOfSender { get; set; }
+        string nameOfResipient { get; set; }
+        string data { get; set; }
     }
 }
