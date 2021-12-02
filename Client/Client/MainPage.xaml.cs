@@ -33,7 +33,7 @@ namespace Client
 
                 user = new User { nickName = _nickName, password = _password };
 
-                QueryLib<User> req = new QueryLib<User>(user, RequestType.Authorization);
+                QueryLib<string> req = new QueryLib<string>(JsonConvert.SerializeObject(user), RequestType.Authorization);
                 string msg = JsonConvert.SerializeObject(req);
 
                 tcpClient.SendMessage(msg);
