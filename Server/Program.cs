@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using InfoLib;
-;
+using Logger;
+using ConsoleApp10;
+
 
 namespace Server
 {
@@ -25,9 +27,9 @@ namespace Server
                 };
                 newClient.tcpclient.SendMessage("1");
                 Info.ShowLog(newClient.nickname, DateTime.UtcNow.ToString("u"), "Клиент подключился");
-                var logger = new LogToFile();
-                logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Клиент {newClient.nickname} подключился.");
-                
+                //var logger = new LogToFile(@"D:/log.txt");
+                //logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Клиент {newClient.nickname} подключился.");
+                Info.ShowInfo("Pr L32");
                 var task = Task.Run(() => ServerLogic.RequestHandler(server, ref newClient));
             }
         }

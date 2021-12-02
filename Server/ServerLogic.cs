@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using InfoLib;
 using Logger;
-using DB_API;
+using ConsoleApp10;
 using System.Text.Json;
 
 namespace Server
@@ -14,15 +14,18 @@ namespace Server
     {
         static public void RequestHandler(TCPServer server, ref User sender)
         {
+            var logger = new LogToFile(@"D:\log.txt");
+            Info.ShowInfo("Srv L18");
             var db = new DBApi();
+            Info.ShowInfo("Srv L18");
             db.Connect();
-            var logger = new LogToFile();
+            
             Request<string> request = new Request<string>();
             Request<User> userRequest = new Request<User>();
             Request<Message> messageRequest = new Request<Message>();
             bool flag = true;
-
-            userRequest = JsonSerializer.Deserialize<Request<User>>(server.GetMessage());
+            
+            /*userRequest = JsonSerializer.Deserialize<Request<User>>(server.GetMessage());
             switch (userRequest.Type)
             {
                 case RequestType.Registration:
@@ -46,29 +49,34 @@ namespace Server
                         return;
                     }
                     break;
-            }
-
-
+            }*/
+            
+            
             while (flag)
             {
                 try
                 {
-                    request = JsonSerializer.Deserialize<Request<string>>(server.GetMessage());
+                    request = JsonSerializer.Deserialize<Request<string>>(server.GetMessage(sender));
                 }
                 catch (JsonException)
                 {
                     try
                     {
-                        messageRequest = JsonSerializer.Deserialize<Request<Message>>(server.GetMessage());
+                        messageRequest = JsonSerializer.Deserialize<Request<Message>>(server.GetMessage(sender));
                     }
                     catch (JsonException)
                     {
                         return;
                     }
                 }
-
-                switch (request.Type)
+                
+             
+            switch (request.Type)
                 {
+                    case RequestType.Test:
+                        Info.ShowInfo(request.Data);
+                        break;
+
                     case RequestType.Registration:
                         if (Registration(server, userRequest.Data, ref db, logger))
                         {
@@ -117,11 +125,11 @@ namespace Server
                         break;
 
                     case RequestType.AddNewContact:
-                        AddNewContact(sender, request.Data, db);
+                        AddNewContact(sender.nickname, request.Data, db);
                         break;
 
                     case RequestType.DeleteTheContact:
-                        DeleteContact(sender, request.Data, db);
+                        DeleteContact(sender.nickname, request.Data, db);
                         break;
 
                     default:
@@ -239,14 +247,14 @@ namespace Server
             return db.GetContactsList(client.nickname);
         }
 
-        static public void AddNewContact(string sender, string newContact, DB_API db)
+        static public void AddNewContact(string sender, string newContact, DBApi db)
         {
             db.InsertContact(sender, newContact);
         }
 
-        static public void DeleteContact(string sender, string contact, DB_API db)
+        static public void DeleteContact(string sender, string contact, DBApi db)
         {
-            db.DeleteContact(sender, contact);
+            //db.DeleteContact(sender, contact);
         }
 
         static List<Message> GiveMeMassegeList(string sender, string receiver, DBApi db)
