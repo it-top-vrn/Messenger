@@ -15,16 +15,15 @@ namespace Server
         static public void RequestHandler(TCPServer server, ref User sender)
         {
             var logger = new LogToFile(@"D:\log.txt");
-            Info.ShowInfo("Srv L18");
             var db = new DBApi();
-            Info.ShowInfo("Srv L18");
-            db.Connect();
             
+            db.Connect();
+            server.AddActiveClient(sender.nickname, sender);
             Request<string> request = new Request<string>();
             Request<User> userRequest = new Request<User>();
             Request<Message> messageRequest = new Request<Message>();
             bool flag = true;
-            
+
             /*userRequest = JsonSerializer.Deserialize<Request<User>>(server.GetMessage());
             switch (userRequest.Type)
             {
@@ -51,30 +50,31 @@ namespace Server
                     break;
             }*/
             
+
+            
             
             while (flag)
             {
+                var temp = sender.tcpclient.GetMessage();
+                
                 try
                 {
-                    request = JsonSerializer.Deserialize<Request<string>>(server.GetMessage(sender));
+
+                    request = JsonSerializer.Deserialize<Request<string>>(temp);
                 }
-                catch (JsonException)
+                catch (Exception)
                 {
-                    try
-                    {
-                        messageRequest = JsonSerializer.Deserialize<Request<Message>>(server.GetMessage(sender));
-                    }
-                    catch (JsonException)
-                    {
-                        return;
-                    }
+                    return;
                 }
+
+                
                 
              
             switch (request.Type)
                 {
                     case RequestType.Test:
                         Info.ShowInfo(request.Data);
+                        sender.tcpclient.SendMessage("1");
                         break;
 
                     case RequestType.Registration:
@@ -105,7 +105,9 @@ namespace Server
                         break;
 
                     case RequestType.Message:
-                        MessageHandler(server, messageRequest.Data, logger);
+                        var msg = JsonSerializer.Deserialize<Message>(request.Data);
+                        Info.ShowLog(msg.SenderNickname, msg.ReceiverNickname, msg.Msg);
+                        //MessageHandler(server, messageRequest.Data, logger);
                         break;
 
                     case RequestType.DropTheChat:
@@ -114,13 +116,16 @@ namespace Server
 
                     case RequestType.GiveMeMessageList:
                         List<Message> chat = ReturnChat(sender.nickname, request.Data, db);
-                        var response = new Response<List<Message>>(chat, ResponseType.RequestAccepted);
+                        var jsonChat = JsonSerializer.Serialize(chat);
+                        var response = new Response<string>(jsonChat, ResponseType.RequestAccepted);
                         server.SendMessageToClient(sender.nickname, response);
                         break;
 
                     case RequestType.GiveMeContactList:
                         var conts = GiveMeContactList(sender, server, db);
-                        var curResp = new Response<List<string>>(conts, ResponseType.RequestAccepted);
+                        var jsonConts = JsonSerializer.Serialize(conts);
+
+                        var curResp = new Response<string>(jsonConts, ResponseType.RequestAccepted);
                         server.SendMessageToClient(sender.nickname, curResp);
                         break;
 
@@ -146,14 +151,14 @@ namespace Server
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
                 Info.ShowLog(newClient.nickname, date, "Регистрация прошла успешно");
-                logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Регистрация прошла успешно");
+                //logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Регистрация прошла успешно");
                 return true;
             }
             else
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
                 Info.ShowLog(newClient.nickname, date, "Отказ регистрации. Никнейм уже занят, а может и еще какая-нибудь херня");
-                logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Отказ регистрации. Никнейм уже занят, а может и еще какая-нибудь херня");
+                //logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Отказ регистрации. Никнейм уже занят, а может и еще какая-нибудь херня");
                 return false;
             }
         }
@@ -163,27 +168,28 @@ namespace Server
             var date = DateTime.Now.ToString();
             if (db.Authentication(newClient.nickname, newClient.password))
             {
+                server.AddActiveClient(newClient.nickname, newClient);
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestAccepted);
                 Info.ShowLog(newClient.nickname, date, "Авторизация прошла успешно");
-                logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Авторизация прошла успешно");
+                //logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Авторизация прошла успешно");
                 return true;
             }
             else
             {
                 server.SendMessageToClient(newClient.nickname, ResponseType.RequestDenied);
                 Info.ShowLog(newClient.nickname, date, "Отказ авторизации. Неправельный никнейм или пароль");
-                logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Отказ авторизации. Неправельный никнейм или пароль");
+              //  logger.WriteToFile(DateTime.UtcNow.ToString("u"), "Отказ авторизации. Неправельный никнейм или пароль");
                 return false;
             }
         }
 
         static void ClientDisconnect(string sender, TCPClient client, TCPServer server, LogToFile logger)
         {
-            server.ActiveClients.Remove(sender);
             server.SendMessageToClient(sender, ResponseType.RequestAccepted);
             client.Close();
+            server.ActiveClients.Remove(sender);
             Info.ShowLog(sender, DateTime.UtcNow.ToString("u"), "Клиент отключился.");
-            logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Клиент {sender} отключился.");
+            //logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Клиент {sender} отключился.");
         }
 
         static void DropTheChat(string sender, string receiver, DBApi db, TCPServer server)
@@ -228,7 +234,7 @@ namespace Server
             if (!server.SendMessageToClient(sender, response))
             {
                 Info.ShowLog(sender, DateTime.UtcNow.ToString("u"), $"Передача ответа потерпела фиаско.");
-                logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Передача ответа клиенту {sender} потерпела фиаско.");
+                //logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Передача ответа клиенту {sender} потерпела фиаско.");
                 
             }
 
@@ -237,7 +243,7 @@ namespace Server
             if (!server.SendMessageToClient(receiver, response))
             {
                 Info.ShowLog(receiver, DateTime.UtcNow.ToString("u"), $"Передача ответа потерпела фиаско.");
-                logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Передача ответа клиенту {receiver} потерпела фиаско.");
+                //logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Передача ответа клиенту {receiver} потерпела фиаско.");
             }
             
         }
