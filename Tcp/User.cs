@@ -12,6 +12,11 @@ namespace Server
         public string nickname = "some nickname";
         public string password = "some password";
 
+        public User(TCPClient client)
+        {
+            tcpclient = (TCPClient)client;
+        }
+
 
         public void AddTCPClient(TCPClient client)
         {

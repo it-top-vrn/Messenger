@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 
 namespace Server
 {
@@ -94,10 +95,23 @@ namespace Server
                     message.Append(Encoding.Unicode.GetString(buffer, 0, bytes));
                 } while (_socket.Available > 0);
             }
-            catch (Exception)
+            catch (ArgumentNullException)
             {
-                throw new Exception("Ошибка получения сообщения");
+
             }
+            catch (SocketException)
+            {
+
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+
+            }
+            catch (ArgumentException)
+            {
+
+            }
+
 
             return message.ToString();
         }
@@ -108,6 +122,21 @@ namespace Server
             {
                 var buffer = Encoding.Unicode.GetBytes(message);
                 _socket.Send(buffer);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool SendMessageToClient(string name, ResponseType response)
+        {
+            try
+            {
+                var msg_send = JsonSerializer.Serialize(response);
+                //ActiveClients[name].tcpclient.SendMessage(msg_send);
             }
             catch (Exception)
             {

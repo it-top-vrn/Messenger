@@ -14,19 +14,29 @@ namespace Server
         public int _port;
         public IPAddress _ip;
         public Socket _socket;
-        public Dictionary<string, User> ActiveClients { get; set; }
+        public Dictionary<string, Server.User> ActiveClients;
 
         public TCPServer()
         {
-
             _ip = IPAddress.Parse("127.0.0.1");
             _port = 8005;
             _ipServer = new IPEndPoint(_ip, _port);
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            ActiveClients = new Dictionary<string, User>();
+            try
+            {
+                _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("qwdeqwdqw");
+                throw ;
+            }
+            //_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
 
         public TCPServer(string ipAddress, int port)
         {
+            ActiveClients = new Dictionary<string, User>();
             try
             {
                 _ip = IPAddress.Parse(ipAddress);
@@ -49,7 +59,17 @@ namespace Server
                 _port = port;
             }
             _ipServer = new IPEndPoint(_ip, _port);
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            try
+            {
+                _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("qwdeqwdqw");
+                throw;
+            }
+            //_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             
         }
 
@@ -86,7 +106,7 @@ namespace Server
         {
             var message = new StringBuilder();
             var buffer = new byte[256];
-
+            
             try
             {
                 do
@@ -102,7 +122,41 @@ namespace Server
             return message.ToString();
         }
 
-       
+        public string GetMessage(Socket socket)
+        {
+            var message = new StringBuilder();
+            var buffer = new byte[256];
+            
+            try
+            {
+                do
+                {
+                    var bytes = socket.Receive(buffer);
+                    message.Append(Encoding.Unicode.GetString(buffer, 0, bytes));
+                } while (_socket.Available > 0);
+            }
+            catch (Exception)
+            {
+                throw new Exception("Ошибка получения сообщения");
+            }
+            return message.ToString();
+        }
+
+        public bool SendMessageToClient(string name, Response<string> response)
+        {
+            try
+            {
+                var msg_send = JsonSerializer.Serialize(response);
+                ActiveClients[name].tcpclient.SendMessage(msg_send);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public bool SendMessageToClient(string name, Response<Message> response)
         {
             try
@@ -147,12 +201,28 @@ namespace Server
 
             return true;
         }
+
+        public bool SendMessageToClient(string name, Response<List<string>> response)
+        {
+            try
+            {
+                var msg_send = JsonSerializer.Serialize(response);
+                ActiveClients[name].tcpclient.SendMessage(msg_send);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
 		
 		public bool SendMessageToClient(string name, ResponseType response){
 			try
             {
                 var msg_send = JsonSerializer.Serialize(response);
-                ActiveClients[name].tcpclient.SendMessage(msg_send);
+                var client = ActiveClients[name];
+                client.tcpclient.SendMessage(msg_send);
             }
             catch (Exception)
             {
