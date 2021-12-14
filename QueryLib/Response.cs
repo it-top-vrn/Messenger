@@ -13,8 +13,6 @@ namespace Server
     public class Response<T>
     {
         public ResponseType Type { get; set; }
-		//public List<string> Contacts { get; set; }
-		//public List<Message> Chat { get; set; }
 		T Data { get; set; }
 
 

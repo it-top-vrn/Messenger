@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Server
 {
 	public enum RequestType{
-		Registration, Authorization, Disconnect, Message, AddNewContact, DeleteTheContact, DropTheChat, GiveMeContactList, GiveMeMessageList
+		Registration, Authorization, Disconnect, Message, AddNewContact, DeleteTheContact, DropTheChat, GiveMeContactList, GiveMeMessageList, Test
 	}
 	
     public class Request<T>
