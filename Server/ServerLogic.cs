@@ -78,10 +78,11 @@ namespace Server
                         break;
 
                     case RequestType.Registration:
-                        if (Registration(server, userRequest.Data, ref db, logger))
+						var user = JsonSerializer.Deserialize<User>(request.Data);
+                        if (Registration(server, user, ref db, logger))
                         {
-                            sender.nickname = userRequest.Data.nickname;
-                            sender.password = userRequest.Data.password;
+                            sender.nickname = user.nickname;
+                            sender.password = user.password;
                         }
                         else
                         {
@@ -92,7 +93,8 @@ namespace Server
                         break;
 
                     case RequestType.Authorization:
-                        if (!Authorization(server, userRequest.Data, ref db, logger))
+						var user = JsonSerializer.Deserialize<User>(request.Data);
+                        if (!Authorization(server, user, ref db, logger))
                         {
                             flag = false;
                             return;
@@ -107,11 +109,12 @@ namespace Server
                     case RequestType.Message:
                         var msg = JsonSerializer.Deserialize<Message>(request.Data);
                         Info.ShowLog(msg.SenderNickname, msg.ReceiverNickname, msg.Msg);
-                        //MessageHandler(server, messageRequest.Data, logger);
+                        //MessageHandler(server, messageRequest.Data, ref db, logger);
                         break;
 
                     case RequestType.DropTheChat:
-                        DropTheChat(sender.nickname, request.Data, db, server);
+						var receiver = JsonSerializer.Deserialize<String>(request.Data);
+                        DropTheChat(sender.nickname, receiver, db, server);
                         break;
 
                     case RequestType.GiveMeMessageList:
@@ -217,7 +220,7 @@ namespace Server
             return chat;
         }
 
-        static void MessageHandler(TCPServer server, Message msg_temp, LogToFile logger)
+        static void MessageHandler(TCPServer server, Message msg_temp, DBApi db, LogToFile logger)
         {
             var sender = msg_temp.SenderNickname;
             var receiver = msg_temp.ReceiverNickname;
@@ -229,7 +232,11 @@ namespace Server
                 Msg = $"Вы {msg_temp.Date}: {msg_temp.Msg}"
             };
             Info.ShowInfo($"{sender} to  {receiver} : {msg_temp.Msg}");
-
+			if(!(db.InsertMessage(sender, receiver, DateTime.UtcNow.ToString("u"), msg.Msg)){
+				Info.ShowLog(sender, DateTime.UtcNow.ToString("u"), $"Запись в БД сообщения не удалась.");
+				//logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Запись в БД сообщения не удалась.");
+			}
+			
             var response = new Response<Message>(msg, ResponseType.RequestAccepted);
             if (!server.SendMessageToClient(sender, response))
             {
