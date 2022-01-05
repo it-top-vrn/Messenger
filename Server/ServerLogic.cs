@@ -7,6 +7,7 @@ using InfoLib;
 using Logger;
 using ConsoleApp10;
 using System.Text.Json;
+using DB_API;
 
 namespace Server
 {
@@ -16,7 +17,7 @@ namespace Server
         {
             var logger = new LogToFile(@"D:\log.txt");
             var db = new DBApi();
-            
+            var db_2 = new DBApi2();
             db.Connect();
             server.AddActiveClient(sender.nickname, sender);
             Request<string> request = new Request<string>();
@@ -67,7 +68,7 @@ namespace Server
                     return;
                 }
 
-                
+                request.Type = RequestType.GiveMeContactList;
                 
              
             switch (request.Type)
@@ -78,11 +79,11 @@ namespace Server
                         break;
 
                     case RequestType.Registration:
-						var user = JsonSerializer.Deserialize<User>(request.Data);
-                        if (Registration(server, user, ref db, logger))
+                        if (Registration(server, userRequest.Data, ref db, logger))
                         {
-                            sender.nickname = user.nickname;
-                            sender.password = user.password;
+                            sender.nickname = userRequest.Data.nickname;
+                            sender.password = userRequest.Data.password;
+                            sender.ID = userRequest.Data.ID;
                         }
                         else
                         {
@@ -93,8 +94,13 @@ namespace Server
                         break;
 
                     case RequestType.Authorization:
-						var user = JsonSerializer.Deserialize<User>(request.Data);
-                        if (!Authorization(server, user, ref db, logger))
+                        if (Authorization(server, userRequest.Data, ref db, logger))
+                        {
+                            sender.nickname = userRequest.Data.nickname;
+                            sender.password = userRequest.Data.password;
+                            sender.ID = userRequest.Data.ID;
+                        }
+                        else
                         {
                             flag = false;
                             return;
@@ -109,12 +115,11 @@ namespace Server
                     case RequestType.Message:
                         var msg = JsonSerializer.Deserialize<Message>(request.Data);
                         Info.ShowLog(msg.SenderNickname, msg.ReceiverNickname, msg.Msg);
-                        //MessageHandler(server, messageRequest.Data, ref db, logger);
+                        //MessageHandler(server, messageRequest.Data, logger);
                         break;
 
                     case RequestType.DropTheChat:
-						var receiver = JsonSerializer.Deserialize<String>(request.Data);
-                        DropTheChat(sender.nickname, receiver, db, server);
+                        DropTheChat(sender.nickname, request.Data, db, server);
                         break;
 
                     case RequestType.GiveMeMessageList:
@@ -125,9 +130,20 @@ namespace Server
                         break;
 
                     case RequestType.GiveMeContactList:
-                        var conts = GiveMeContactList(sender, server, db);
-                        var jsonConts = JsonSerializer.Serialize(conts);
-
+                        //var conts2 = GiveMeContactList(sender, server, db);
+                        var client = new ClientTable
+                        {
+                            Nickname = sender.nickname,
+                            Password = sender.password,
+                            ID = 1
+                        };
+                        var conts2 = db_2.GiveMeContactList(client);
+                        foreach (var cont in conts2)
+                        {
+                            Console.WriteLine(conts2);
+                        }
+                        Console.WriteLine();
+                        var jsonConts = JsonSerializer.Serialize(conts2);
                         var curResp = new Response<string>(jsonConts, ResponseType.RequestAccepted);
                         server.SendMessageToClient(sender.nickname, curResp);
                         break;
@@ -220,7 +236,7 @@ namespace Server
             return chat;
         }
 
-        static void MessageHandler(TCPServer server, Message msg_temp, DBApi db, LogToFile logger)
+        static void MessageHandler(TCPServer server, Message msg_temp, LogToFile logger)
         {
             var sender = msg_temp.SenderNickname;
             var receiver = msg_temp.ReceiverNickname;
@@ -232,11 +248,7 @@ namespace Server
                 Msg = $"Вы {msg_temp.Date}: {msg_temp.Msg}"
             };
             Info.ShowInfo($"{sender} to  {receiver} : {msg_temp.Msg}");
-			if(!(db.InsertMessage(sender, receiver, DateTime.UtcNow.ToString("u"), msg.Msg)){
-				Info.ShowLog(sender, DateTime.UtcNow.ToString("u"), $"Запись в БД сообщения не удалась.");
-				//logger.WriteToFile(DateTime.UtcNow.ToString("u"), $"Запись в БД сообщения не удалась.");
-			}
-			
+
             var response = new Response<Message>(msg, ResponseType.RequestAccepted);
             if (!server.SendMessageToClient(sender, response))
             {
@@ -255,8 +267,20 @@ namespace Server
             
         }
 
+
+        //TODO новые методы db
         static public List<string> GiveMeContactList(User client, TCPServer server, DBApi db)
         {
+          /*var conts2 = GiveMeContactList(sender, server, db);
+            foreach (var cont in conts2)
+            {
+                Console.WriteLine(conts2);
+
+            }
+            Console.WriteLine();
+            var jsonConts = JsonSerializer.Serialize(conts2);
+            var curResp = new Response<string>(jsonConts, ResponseType.RequestAccepted);
+            server.SendMessageToClient(sender.nickname, curResp);*/
             return db.GetContactsList(client.nickname);
         }
 
